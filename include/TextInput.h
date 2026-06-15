@@ -30,6 +30,7 @@ public:
     void handleEvent(sf::Event& event) override;
 
     std::string getText() const;
+    void setText(const std::string& text);
     void clear();
     void setFocus(bool focus);
     bool getFocus() const;

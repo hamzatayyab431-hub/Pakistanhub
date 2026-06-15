@@ -7,7 +7,7 @@
 
 ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg)
     : font(fnt), userManager(um), postManager(pm), commentManager(cm), socialGraph(sg), currentUser(nullptr),
-      targetUser(nullptr), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle(""), clickedPostId(-1) {
+      targetUser(nullptr), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle(""), clickedPostId(-1), isEditingProfile(false) {
 
     // Configure header top bar (identical to FeedScreen)
     headerBackground.setPosition(0.0f, 0.0f);
@@ -110,6 +110,22 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
         font, "FOLLOW"
     );
 
+    // Edit Profile Buttons
+    editProfileButton = std::make_unique<GlassButton>(
+        sf::Vector2f(940.0f, 120.0f),
+        sf::Vector2f(220.0f, 50.0f),
+        font, "EDIT PROFILE", GlassButton::Type::NAV_DEFAULT
+    );
+    saveProfileButton = std::make_unique<GlassButton>(
+        sf::Vector2f(940.0f, 120.0f),
+        sf::Vector2f(220.0f, 50.0f),
+        font, "SAVE PROFILE", GlassButton::Type::PRIMARY
+    );
+
+    // Edit Inputs
+    cityEditInput = std::make_unique<TextInput>(sf::Vector2f(195.0f, 110.0f), sf::Vector2f(300.0f, 24.0f), font, "City...");
+    bioEditInput = std::make_unique<TextInput>(sf::Vector2f(195.0f, 138.0f), sf::Vector2f(500.0f, 24.0f), font, "Bio...");
+
     // Setup scrollable view (clips inside y = 230 to y = 700)
     feedViewport.setSize(1080.0f, 470.0f);
     feedViewport.setViewport(sf::FloatRect(100.0f / 1280.0f, 230.0f / 720.0f, 1080.0f / 1280.0f, 470.0f / 720.0f));
@@ -146,7 +162,7 @@ void ProfileScreen::reloadProfile() {
     handleText.setPosition(nameText.getPosition().x + nameWidth + 10.0f, nameText.getPosition().y + 6.0f);
 
     std::string cityStr = targetUser->getCity();
-    cityText.setString(cityStr.empty() ? "📍 Unknown City" : "📍 " + cityStr);
+    cityText.setString(cityStr.empty() ? "City: Unknown" : "City: " + cityStr);
     bioText.setString(targetUser->getBio().empty() ? "No bio written yet." : targetUser->getBio());
 
     // Friends count
@@ -163,11 +179,13 @@ void ProfileScreen::reloadProfile() {
     // Configure Follow button based on relationship
     if (currentUser != nullptr && targetUser != nullptr) {
         if (currentUser->getUsername() == targetUser->getUsername()) {
-            // Self profile: hide follow button offscreen
+            // Self profile: hide follow button offscreen, show edit button
             followButton->setPosition(sf::Vector2f(3000.0f, 3000.0f));
+            editProfileButton->setPosition(sf::Vector2f(940.0f, 120.0f));
         } else {
             // Other profile: position normally and set toggle state
             followButton->setPosition(sf::Vector2f(940.0f, 120.0f));
+            editProfileButton->setPosition(sf::Vector2f(3000.0f, 3000.0f));
             if (socialGraph.isFollowing(currentUser->getUsername(), targetUser->getUsername())) {
                 followButton = std::make_unique<GlassButton>(sf::Vector2f(940.0f, 120.0f), sf::Vector2f(220.0f, 50.0f), font, "UNFOLLOW");
             } else {
@@ -215,14 +233,23 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     window.draw(avatarLetter);
     window.draw(nameText);
     window.draw(handleText);
-    window.draw(cityText);
-    window.draw(bioText);
-    window.draw(statsText);
-
-    // Draw follow button if not viewing self
-    if (currentUser != nullptr && targetUser != nullptr && currentUser->getUsername() != targetUser->getUsername()) {
-        followButton->draw(window);
+    
+    if (isEditingProfile && currentUser && targetUser && currentUser->getUsername() == targetUser->getUsername()) {
+        cityEditInput->draw(window);
+        bioEditInput->draw(window);
+        saveProfileButton->draw(window);
+    } else {
+        window.draw(cityText);
+        window.draw(bioText);
+        
+        if (currentUser && targetUser && currentUser->getUsername() == targetUser->getUsername()) {
+            editProfileButton->draw(window);
+        } else {
+            followButton->draw(window);
+        }
     }
+    
+    window.draw(statsText);
 
     // Draw scrollable posts
     sf::View originalView = window.getView();
@@ -248,7 +275,27 @@ void ProfileScreen::handleEvent(sf::Event& event) {
     navLogout->handleEvent(event);
 
     // Handle Follow/Unfollow button action
-    if (currentUser->getUsername() != targetUser->getUsername()) {
+    if (currentUser->getUsername() == targetUser->getUsername()) {
+        if (isEditingProfile) {
+            if (saveProfileButton->isClicked(event)) {
+                isEditingProfile = false;
+                currentUser->setCity(cityEditInput->getText());
+                currentUser->setBio(bioEditInput->getText());
+                userManager.saveToFile("data/users.txt");
+                reloadProfile(); // Refresh the text displays
+                return;
+            }
+            cityEditInput->handleEvent(event);
+            bioEditInput->handleEvent(event);
+        } else {
+            if (editProfileButton->isClicked(event)) {
+                isEditingProfile = true;
+                cityEditInput->setText(currentUser->getCity());
+                bioEditInput->setText(currentUser->getBio());
+                return;
+            }
+        }
+    } else {
         followButton->handleEvent(event);
 
         if (followButton->isClicked(event)) {

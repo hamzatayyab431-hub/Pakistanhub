@@ -3,6 +3,7 @@
 
 #include "UIComponent.h"
 #include "GlassButton.h"
+#include "TextInput.h"
 #include "PostCard.h"
 #include "PostManager.h"
 #include "UserManager.h"
@@ -41,6 +42,11 @@ private:
     sf::Text cityText;
     sf::Text statsText;
     std::unique_ptr<GlassButton> followButton;
+    std::unique_ptr<GlassButton> editProfileButton;
+    std::unique_ptr<GlassButton> saveProfileButton;
+    std::unique_ptr<TextInput> cityEditInput;
+    std::unique_ptr<TextInput> bioEditInput;
+    bool isEditingProfile;
 
     // Scrollable feed viewport
     sf::View feedViewport;

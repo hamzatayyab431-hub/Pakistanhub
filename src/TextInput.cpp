@@ -96,6 +96,11 @@ std::string TextInput::getText() const {
     return textString;
 }
 
+void TextInput::setText(const std::string& text) {
+    textString = text;
+    updateDisplayedText();
+}
+
 void TextInput::clear() {
     textString.clear();
     updateDisplayedText();
