@@ -17,8 +17,10 @@ private:
     bool isEnabled;
     Type buttonType;
 
-    sf::RectangleShape backgroundRect;
+    sf::ConvexShape backgroundRect;
     sf::Text labelText;
+
+    void updateShape();
 
 public:
     GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& labelStr, Type type = Type::PRIMARY);

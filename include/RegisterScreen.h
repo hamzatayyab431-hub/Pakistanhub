@@ -18,6 +18,8 @@ private:
     sf::Text subtitleText;
     std::unique_ptr<TextInput> usernameInput;
     std::unique_ptr<TextInput> displayNameInput;
+    std::unique_ptr<TextInput> bioInput;
+    std::unique_ptr<TextInput> cityInput;
     std::unique_ptr<TextInput> passwordInput;
     std::unique_ptr<TextInput> confirmPasswordInput;
     std::unique_ptr<GlassButton> registerButton;
@@ -38,6 +40,8 @@ public:
 
     std::string getUsername() const;
     std::string getDisplayName() const;
+    std::string getBio() const;
+    std::string getCity() const;
     std::string getPassword() const;
     std::string getConfirmPassword() const;
     void setErrorMessage(const std::string& error);

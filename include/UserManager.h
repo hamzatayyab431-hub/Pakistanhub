@@ -15,7 +15,7 @@ public:
 
     bool loadFromFile(const std::string& path);
     bool saveToFile(const std::string& path) const;
-    bool registerUser(const std::string& username, const std::string& password, const std::string& displayName);
+    bool registerUser(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio, const std::string& city);
     User* loginUser(const std::string& username, const std::string& password);
 
     const std::vector<User>& getUsers() const;

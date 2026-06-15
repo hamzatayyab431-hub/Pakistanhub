@@ -9,12 +9,13 @@ private:
     std::string password;
     std::string displayName;
     std::string bio;
+    std::string city;
     int followerCount;
     int followingCount;
 
 public:
     User();
-    User(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio = "", int followerCount = 0, int followingCount = 0);
+    User(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio = "", const std::string& city = "", int followerCount = 0, int followingCount = 0);
 
     // Getters and Setters
     std::string getUsername() const;
@@ -28,6 +29,9 @@ public:
 
     std::string getBio() const;
     void setBio(const std::string& bio);
+
+    std::string getCity() const;
+    void setCity(const std::string& city);
 
     int getFollowerCount() const;
     void setFollowerCount(int count);

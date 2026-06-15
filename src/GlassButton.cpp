@@ -1,12 +1,17 @@
 #include "GlassButton.h"
 #include "Theme.h"
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& labelStr, Type type)
     : position(pos), size(sz), font(fnt), labelString(labelStr), isHovered(false), isEnabled(true), buttonType(type) {
 
     // Configure background rectangle
     backgroundRect.setPosition(position);
-    backgroundRect.setSize(size);
+    updateShape();
 
     // Configure label text
     unsigned int charSize = static_cast<unsigned int>(size.y * 0.40f);
@@ -24,19 +29,47 @@ GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Fo
     labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f - 2.0f);
 }
 
+void GlassButton::updateShape() {
+    float radius = std::min(size.x, size.y) * 0.15f; // Dynamic radius based on size
+    if (radius > 10.0f) radius = 10.0f; // Max radius
+    
+    int cornerPoints = 8;
+    backgroundRect.setPointCount(cornerPoints * 4);
+    
+    // Top-left
+    for (int i = 0; i < cornerPoints; ++i) {
+        float angle = M_PI + M_PI / 2.0f * i / (cornerPoints - 1);
+        backgroundRect.setPoint(i, sf::Vector2f(radius + std::cos(angle) * radius, radius + std::sin(angle) * radius));
+    }
+    // Top-right
+    for (int i = 0; i < cornerPoints; ++i) {
+        float angle = 1.5f * M_PI + M_PI / 2.0f * i / (cornerPoints - 1);
+        backgroundRect.setPoint(cornerPoints + i, sf::Vector2f(size.x - radius + std::cos(angle) * radius, radius + std::sin(angle) * radius));
+    }
+    // Bottom-right
+    for (int i = 0; i < cornerPoints; ++i) {
+        float angle = 0.0f + M_PI / 2.0f * i / (cornerPoints - 1);
+        backgroundRect.setPoint(cornerPoints * 2 + i, sf::Vector2f(size.x - radius + std::cos(angle) * radius, size.y - radius + std::sin(angle) * radius));
+    }
+    // Bottom-left
+    for (int i = 0; i < cornerPoints; ++i) {
+        float angle = M_PI / 2.0f + M_PI / 2.0f * i / (cornerPoints - 1);
+        backgroundRect.setPoint(cornerPoints * 3 + i, sf::Vector2f(radius + std::cos(angle) * radius, size.y - radius + std::sin(angle) * radius));
+    }
+}
+
 void GlassButton::draw(sf::RenderWindow& window) {
     if (!isEnabled) {
-        backgroundRect.setFillColor(sf::Color(100, 100, 100, 20));
-        backgroundRect.setOutlineColor(sf::Color(100, 100, 100, 40));
-        backgroundRect.setOutlineThickness(1.0f);
-        labelText.setFillColor(sf::Color(150, 150, 150, 100));
+        backgroundRect.setFillColor(Theme::BG_MID);
+        backgroundRect.setOutlineThickness(0.0f);
+        labelText.setFillColor(Theme::TEXT_DIM);
         window.draw(backgroundRect);
         window.draw(labelText);
         return;
     }
 
     if (buttonType == Type::PRIMARY) {
-        backgroundRect.setFillColor(isHovered ? Theme::GREEN_DIM : Theme::GREEN_PRIMARY);
+        backgroundRect.setFillColor(isHovered ? Theme::GREEN_PRIMARY : Theme::GREEN_DIM);
         backgroundRect.setOutlineThickness(0.0f);
         labelText.setFillColor(Theme::BG_DARK);
     } else if (buttonType == Type::NAV_ACTIVE) {
@@ -46,14 +79,12 @@ void GlassButton::draw(sf::RenderWindow& window) {
     } else {
         // NAV_DEFAULT
         if (isHovered) {
-            backgroundRect.setFillColor(Theme::GLASS_FILL);
-            backgroundRect.setOutlineColor(Theme::GREEN_PRIMARY);
-            backgroundRect.setOutlineThickness(1.5f);
-            labelText.setFillColor(Theme::TEXT_PRIMARY);
+            backgroundRect.setFillColor(sf::Color(45, 55, 70, 255)); // Professional slightly brightened solid fill
+            backgroundRect.setOutlineThickness(0.0f);
+            labelText.setFillColor(sf::Color::White);
         } else {
-            backgroundRect.setFillColor(sf::Color::Transparent);
-            backgroundRect.setOutlineColor(Theme::GLASS_BORDER);
-            backgroundRect.setOutlineThickness(1.0f);
+            backgroundRect.setFillColor(Theme::BG_MID); // Solid dark background
+            backgroundRect.setOutlineThickness(0.0f);
             labelText.setFillColor(Theme::TEXT_MUTED);
         }
     }

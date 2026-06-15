@@ -84,6 +84,12 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     handleText.setCharacterSize(14);
     handleText.setFillColor(Theme::TEXT_MUTED);
 
+    // Profile City
+    cityText.setFont(font);
+    cityText.setCharacterSize(14);
+    cityText.setFillColor(Theme::TEXT_MUTED);
+    cityText.setPosition(195.0f, 115.0f);
+
     // Profile Bio
     bioText.setFont(font);
     bioText.setCharacterSize(14);
@@ -95,7 +101,7 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     statsText.setCharacterSize(14);
     statsText.setStyle(sf::Text::Bold);
     statsText.setFillColor(Theme::GREEN_PRIMARY);
-    statsText.setPosition(195.0f, 172.0f);
+    statsText.setPosition(195.0f, 168.0f);
 
     // Follow Button
     followButton = std::make_unique<GlassButton>(
@@ -139,6 +145,8 @@ void ProfileScreen::reloadProfile() {
     float nameWidth = nameText.getGlobalBounds().width;
     handleText.setPosition(nameText.getPosition().x + nameWidth + 10.0f, nameText.getPosition().y + 6.0f);
 
+    std::string cityStr = targetUser->getCity();
+    cityText.setString(cityStr.empty() ? "📍 Unknown City" : "📍 " + cityStr);
     bioText.setString(targetUser->getBio().empty() ? "No bio written yet." : targetUser->getBio());
 
     // Friends count
@@ -207,6 +215,7 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     window.draw(avatarLetter);
     window.draw(nameText);
     window.draw(handleText);
+    window.draw(cityText);
     window.draw(bioText);
     window.draw(statsText);
 

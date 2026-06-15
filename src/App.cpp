@@ -9,8 +9,8 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
     window.setFramerateLimit(60);
 
     // Load typography font from assets
-    if (!font.loadFromFile("assets/fonts/Roboto-Regular.ttf")) {
-        std::cerr << "Error: Failed to load font assets/fonts/Roboto-Regular.ttf!\n";
+    if (!font.loadFromFile("assets/fonts/Inter-Regular.ttf")) {
+        std::cerr << "Error: Failed to load font assets/fonts/Inter-Regular.ttf!\n";
         std::exit(1);
     }
 
@@ -132,6 +132,8 @@ void App::processEvents() {
             else if (registerScreen->isRegisterClicked(event, window)) {
                 std::string username = registerScreen->getUsername();
                 std::string displayName = registerScreen->getDisplayName();
+                std::string bio = registerScreen->getBio();
+                std::string city = registerScreen->getCity();
                 std::string password = registerScreen->getPassword();
                 std::string confirmPass = registerScreen->getConfirmPassword();
 
@@ -144,7 +146,7 @@ void App::processEvents() {
                            password.find('|') != std::string::npos) {
                     registerScreen->setErrorMessage("Disallowed character '|' entered.");
                 } else {
-                    bool success = userManager.registerUser(username, password, displayName);
+                    bool success = userManager.registerUser(username, password, displayName, bio, city);
                     if (success) {
                         registerScreen->clearFields();
                         loginScreen->setErrorMessage("Registration successful! Please login.");

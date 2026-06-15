@@ -38,6 +38,7 @@ private:
     sf::Text nameText;
     sf::Text handleText;
     sf::Text bioText;
+    sf::Text cityText;
     sf::Text statsText;
     std::unique_ptr<GlassButton> followButton;
 

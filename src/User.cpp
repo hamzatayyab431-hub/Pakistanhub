@@ -1,10 +1,11 @@
 #include "User.h"
 #include <sstream>
+#include <vector>
 
 User::User() : followerCount(0), followingCount(0) {}
 
-User::User(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio, int followerCount, int followingCount)
-    : username(username), password(password), displayName(displayName), bio(bio), followerCount(followerCount), followingCount(followingCount) {}
+User::User(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio, const std::string& city, int followerCount, int followingCount)
+    : username(username), password(password), displayName(displayName), bio(bio), city(city), followerCount(followerCount), followingCount(followingCount) {}
 
 std::string User::getUsername() const { return username; }
 void User::setUsername(const std::string& username) { this->username = username; }
@@ -18,6 +19,9 @@ void User::setDisplayName(const std::string& displayName) { this->displayName = 
 std::string User::getBio() const { return bio; }
 void User::setBio(const std::string& bio) { this->bio = bio; }
 
+std::string User::getCity() const { return city; }
+void User::setCity(const std::string& city) { this->city = city; }
+
 int User::getFollowerCount() const { return followerCount; }
 void User::setFollowerCount(int count) { this->followerCount = count; }
 
@@ -25,22 +29,35 @@ int User::getFollowingCount() const { return followingCount; }
 void User::setFollowingCount(int count) { this->followingCount = count; }
 
 std::string User::serialize() const {
-    return username + "|" + password + "|" + displayName + "|" + bio + "|" + std::to_string(followerCount) + "|" + std::to_string(followingCount);
+    return username + "|" + password + "|" + displayName + "|" + bio + "|" + city + "|" + std::to_string(followerCount) + "|" + std::to_string(followingCount);
 }
 
 User User::deserialize(const std::string& data) {
     std::stringstream ss(data);
-    std::string username, password, displayName, bio, followerStr, followingStr;
+    std::vector<std::string> parts;
+    std::string token;
 
-    std::getline(ss, username, '|');
-    std::getline(ss, password, '|');
-    std::getline(ss, displayName, '|');
-    std::getline(ss, bio, '|');
-    std::getline(ss, followerStr, '|');
-    std::getline(ss, followingStr, '|');
+    while (std::getline(ss, token, '|')) {
+        parts.push_back(token);
+    }
 
-    int followerCount = followerStr.empty() ? 0 : std::stoi(followerStr);
-    int followingCount = followingStr.empty() ? 0 : std::stoi(followingStr);
+    std::string username = parts.size() > 0 ? parts[0] : "";
+    std::string password = parts.size() > 1 ? parts[1] : "";
+    std::string displayName = parts.size() > 2 ? parts[2] : "";
+    std::string bio = parts.size() > 3 ? parts[3] : "";
 
-    return User(username, password, displayName, bio, followerCount, followingCount);
+    std::string city = "";
+    int followerCount = 0;
+    int followingCount = 0;
+
+    if (parts.size() == 6) {
+        followerCount = parts[4].empty() ? 0 : std::stoi(parts[4]);
+        followingCount = parts[5].empty() ? 0 : std::stoi(parts[5]);
+    } else if (parts.size() >= 7) {
+        city = parts[4];
+        followerCount = parts[5].empty() ? 0 : std::stoi(parts[5]);
+        followingCount = parts[6].empty() ? 0 : std::stoi(parts[6]);
+    }
+
+    return User(username, password, displayName, bio, city, followerCount, followingCount);
 }

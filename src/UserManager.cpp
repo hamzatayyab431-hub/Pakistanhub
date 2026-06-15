@@ -38,7 +38,7 @@ bool UserManager::saveToFile(const std::string& path) const {
     return true;
 }
 
-bool UserManager::registerUser(const std::string& username, const std::string& password, const std::string& displayName) {
+bool UserManager::registerUser(const std::string& username, const std::string& password, const std::string& displayName, const std::string& bio, const std::string& city) {
     if (username.empty() || password.empty() || displayName.empty()) {
         return false;
     }
@@ -57,11 +57,13 @@ bool UserManager::registerUser(const std::string& username, const std::string& p
     // Validate that inputs do not contain character delimiters '|'
     if (username.find('|') != std::string::npos || 
         password.find('|') != std::string::npos || 
-        displayName.find('|') != std::string::npos) {
+        displayName.find('|') != std::string::npos ||
+        bio.find('|') != std::string::npos ||
+        city.find('|') != std::string::npos) {
         return false;
     }
 
-    users.push_back(User(username, password, displayName));
+    users.push_back(User(username, password, displayName, bio, city));
 
     // Save to file if we have a valid path loaded
     if (!filePath.empty()) {

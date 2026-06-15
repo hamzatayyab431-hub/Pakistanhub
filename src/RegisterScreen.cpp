@@ -11,7 +11,7 @@ static void centerTextHorizontally(sf::Text& text, float centerX) {
 
 RegisterScreen::RegisterScreen(sf::Font& fnt) : font(fnt) {
     float cardWidth = 440.0f;
-    float cardHeight = 540.0f;
+    float cardHeight = 660.0f;
     float cardX = (1280.0f - cardWidth) / 2.0f;
     float cardY = (720.0f - cardHeight) / 2.0f;
 
@@ -60,29 +60,41 @@ RegisterScreen::RegisterScreen(sf::Font& fnt) : font(fnt) {
         font, "Display Name"
     );
 
-    passwordInput = std::make_unique<TextInput>(
+    bioInput = std::make_unique<TextInput>(
         sf::Vector2f(inputX, cardY + 250.0f),
+        sf::Vector2f(inputWidth, inputHeight),
+        font, "Bio"
+    );
+
+    cityInput = std::make_unique<TextInput>(
+        sf::Vector2f(inputX, cardY + 310.0f),
+        sf::Vector2f(inputWidth, inputHeight),
+        font, "City"
+    );
+
+    passwordInput = std::make_unique<TextInput>(
+        sf::Vector2f(inputX, cardY + 370.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "Password", true
     );
 
     // Strength indicator
-    strengthBarBg.setPosition(inputX, cardY + 305.0f);
+    strengthBarBg.setPosition(inputX, cardY + 425.0f);
     strengthBarBg.setSize(sf::Vector2f(inputWidth, 4.0f));
     strengthBarBg.setFillColor(sf::Color(255, 255, 255, 20));
 
-    strengthBarFill.setPosition(inputX, cardY + 305.0f);
+    strengthBarFill.setPosition(inputX, cardY + 425.0f);
     strengthBarFill.setSize(sf::Vector2f(0.0f, 4.0f));
 
     confirmPasswordInput = std::make_unique<TextInput>(
-        sf::Vector2f(inputX, cardY + 325.0f),
+        sf::Vector2f(inputX, cardY + 445.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "Confirm Password", true
     );
 
     // Register button
     registerButton = std::make_unique<GlassButton>(
-        sf::Vector2f(inputX, cardY + 395.0f),
+        sf::Vector2f(inputX, cardY + 515.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "REGISTER"
     );
@@ -92,7 +104,7 @@ RegisterScreen::RegisterScreen(sf::Font& fnt) : font(fnt) {
     backLink.setCharacterSize(14);
     backLink.setFillColor(Theme::TEXT_MUTED);
     backLink.setString("Already have an account? Login");
-    backLink.setPosition(centerX, cardY + 460.0f);
+    backLink.setPosition(centerX, cardY + 580.0f);
     centerTextHorizontally(backLink, centerX);
 
     // Error message text
@@ -100,7 +112,7 @@ RegisterScreen::RegisterScreen(sf::Font& fnt) : font(fnt) {
     errorText.setCharacterSize(14);
     errorText.setFillColor(Theme::ACCENT_RED);
     errorText.setString("");
-    errorText.setPosition(centerX, cardY + 500.0f);
+    errorText.setPosition(centerX, cardY + 620.0f);
 }
 
 void RegisterScreen::updatePasswordStrength() {
@@ -137,6 +149,8 @@ void RegisterScreen::draw(sf::RenderWindow& window) {
 
     usernameInput->draw(window);
     displayNameInput->draw(window);
+    bioInput->draw(window);
+    cityInput->draw(window);
     passwordInput->draw(window);
     
     window.draw(strengthBarBg);
@@ -152,6 +166,8 @@ void RegisterScreen::draw(sf::RenderWindow& window) {
 void RegisterScreen::handleEvent(sf::Event& event) {
     usernameInput->handleEvent(event);
     displayNameInput->handleEvent(event);
+    bioInput->handleEvent(event);
+    cityInput->handleEvent(event);
     passwordInput->handleEvent(event);
     confirmPasswordInput->handleEvent(event);
     registerButton->handleEvent(event);
@@ -175,6 +191,14 @@ std::string RegisterScreen::getDisplayName() const {
     return displayNameInput->getText();
 }
 
+std::string RegisterScreen::getBio() const {
+    return bioInput->getText();
+}
+
+std::string RegisterScreen::getCity() const {
+    return cityInput->getText();
+}
+
 std::string RegisterScreen::getPassword() const {
     return passwordInput->getText();
 }
@@ -191,6 +215,8 @@ void RegisterScreen::setErrorMessage(const std::string& error) {
 void RegisterScreen::clearFields() {
     usernameInput->clear();
     displayNameInput->clear();
+    bioInput->clear();
+    cityInput->clear();
     passwordInput->clear();
     confirmPasswordInput->clear();
     errorText.setString("");
