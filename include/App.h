@@ -36,9 +36,22 @@ private:
     std::unique_ptr<PostDetailScreen> postDetailScreen;
     std::unique_ptr<SearchScreen> searchScreen;
 
+    // Global transition and background elements
+    sf::VertexArray backgroundGradient;
+    sf::CircleShape glowTopLeft;
+    sf::CircleShape glowBottomRight;
+    sf::CircleShape glowCenter;
+
+    AppState nextState;
+    bool isTransitioning;
+    float transitionAlpha;
+    sf::RectangleShape transitionOverlay;
+
     void processEvents();
     void update();
     void render();
+    void drawBackground();
+    void transitionTo(AppState state);
 
 public:
     App();

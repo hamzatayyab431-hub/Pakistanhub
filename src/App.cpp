@@ -1,9 +1,11 @@
 #include "App.h"
+#include "Theme.h"
 #include <iostream>
 #include <cstdlib>
 
 App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar | sf::Style::Close),
-             currentState(AppState::LOGIN), currentUser(nullptr) {
+             currentState(AppState::LOGIN), currentUser(nullptr),
+             nextState(AppState::LOGIN), isTransitioning(false), transitionAlpha(0.0f) {
     window.setFramerateLimit(60);
 
     // Load typography font from assets
@@ -27,12 +29,46 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
     }
 
     // Initialize screen objects
+    std::cout << "Creating LoginScreen..." << std::endl;
     loginScreen = std::make_unique<LoginScreen>(font);
+    std::cout << "Creating RegisterScreen..." << std::endl;
     registerScreen = std::make_unique<RegisterScreen>(font);
+    std::cout << "Creating FeedScreen..." << std::endl;
     feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager, commentManager, socialGraph);
+    std::cout << "Creating ProfileScreen..." << std::endl;
     profileScreen = std::make_unique<ProfileScreen>(font, userManager, postManager, commentManager, socialGraph);
+    std::cout << "Creating PostDetailScreen..." << std::endl;
     postDetailScreen = std::make_unique<PostDetailScreen>(font, userManager, postManager, commentManager, socialGraph);
+    std::cout << "Creating SearchScreen..." << std::endl;
     searchScreen = std::make_unique<SearchScreen>(font, userManager, postManager, socialGraph);
+    std::cout << "App initialization complete." << std::endl;
+
+    // Initialize background
+    backgroundGradient.setPrimitiveType(sf::Quads);
+    backgroundGradient.resize(4);
+    backgroundGradient[0].position = sf::Vector2f(0.f, 0.f);
+    backgroundGradient[0].color = Theme::BG_DARK;
+    backgroundGradient[1].position = sf::Vector2f(1280.f, 0.f);
+    backgroundGradient[1].color = Theme::BG_DARK;
+    backgroundGradient[2].position = sf::Vector2f(1280.f, 720.f);
+    backgroundGradient[2].color = Theme::BG_MID;
+    backgroundGradient[3].position = sf::Vector2f(0.f, 720.f);
+    backgroundGradient[3].color = Theme::BG_MID;
+
+    glowTopLeft.setRadius(300.f);
+    glowTopLeft.setPosition(-150.f, -150.f);
+    glowTopLeft.setFillColor(sf::Color(0, 200, 100, 12));
+
+    glowBottomRight.setRadius(250.f);
+    glowBottomRight.setPosition(1280.f - 250.f, 720.f - 150.f);
+    glowBottomRight.setFillColor(sf::Color(0, 200, 100, 12));
+
+    glowCenter.setRadius(400.f);
+    glowCenter.setPosition(1280.f / 2.f - 400.f, 720.f / 2.f - 400.f);
+    glowCenter.setFillColor(sf::Color(255, 255, 255, 5));
+
+    transitionOverlay.setSize(sf::Vector2f(1280.f, 720.f));
+    transitionOverlay.setFillColor(sf::Color(0, 0, 0, 0));
 }
 
 void App::run() {
@@ -286,21 +322,22 @@ void App::update() {
     }
 }
 
+void App::drawBackground() {
+    window.draw(backgroundGradient);
+    window.draw(glowTopLeft);
+    window.draw(glowBottomRight);
+    window.draw(glowCenter);
+}
+
+void App::transitionTo(AppState state) {
+    currentState = state; // We'll implement actual fade logic in Redesign7
+}
+
 void App::render() {
     // Clear screen
-    window.clear(sf::Color(13, 17, 23));
+    window.clear(Theme::BG_DARK);
 
-    // Draw subtle vertical gradient from #0D1117 (top) to #111827 (bottom)
-    sf::VertexArray gradient(sf::Quads, 4);
-    gradient[0].position = sf::Vector2f(0.f, 0.f);
-    gradient[0].color = sf::Color(13, 17, 23);
-    gradient[1].position = sf::Vector2f(1280.f, 0.f);
-    gradient[1].color = sf::Color(13, 17, 23);
-    gradient[2].position = sf::Vector2f(1280.f, 720.f);
-    gradient[2].color = sf::Color(17, 24, 39);
-    gradient[3].position = sf::Vector2f(0.f, 720.f);
-    gradient[3].color = sf::Color(17, 24, 39);
-    window.draw(gradient);
+    drawBackground();
 
     // Render active screen
     if (currentState == AppState::LOGIN) {
