@@ -1,4 +1,5 @@
 #include "User.h"
+#include <sstream>
 
 User::User() : followerCount(0), followingCount(0) {}
 
@@ -22,3 +23,24 @@ void User::setFollowerCount(int count) { this->followerCount = count; }
 
 int User::getFollowingCount() const { return followingCount; }
 void User::setFollowingCount(int count) { this->followingCount = count; }
+
+std::string User::serialize() const {
+    return username + "|" + password + "|" + displayName + "|" + bio + "|" + std::to_string(followerCount) + "|" + std::to_string(followingCount);
+}
+
+User User::deserialize(const std::string& data) {
+    std::stringstream ss(data);
+    std::string username, password, displayName, bio, followerStr, followingStr;
+
+    std::getline(ss, username, '|');
+    std::getline(ss, password, '|');
+    std::getline(ss, displayName, '|');
+    std::getline(ss, bio, '|');
+    std::getline(ss, followerStr, '|');
+    std::getline(ss, followingStr, '|');
+
+    int followerCount = followerStr.empty() ? 0 : std::stoi(followerStr);
+    int followingCount = followingStr.empty() ? 0 : std::stoi(followingStr);
+
+    return User(username, password, displayName, bio, followerCount, followingCount);
+}

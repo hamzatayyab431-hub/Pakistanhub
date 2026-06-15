@@ -34,6 +34,10 @@ public:
 
     int getFollowingCount() const;
     void setFollowingCount(int count);
+
+    // Serialization & Deserialization
+    std::string serialize() const;
+    static User deserialize(const std::string& data);
 };
 
 #endif // USER_H
