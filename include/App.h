@@ -41,6 +41,7 @@ private:
     sf::CircleShape glowTopLeft;
     sf::CircleShape glowBottomRight;
     sf::CircleShape glowCenter;
+    sf::Clock appClock;
 
     AppState nextState;
     bool isTransitioning;

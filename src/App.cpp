@@ -87,6 +87,11 @@ void App::processEvents() {
             return;
         }
 
+        // Ignore input events while transitioning
+        if (isTransitioning) {
+            continue;
+        }
+
         // Delegate event handling based on the current AppState
         if (currentState == AppState::LOGIN) {
             loginScreen->handleEvent(event);
@@ -94,7 +99,7 @@ void App::processEvents() {
             // Check if REGISTER link is clicked
             if (loginScreen->isRegisterLinkClicked(event, window)) {
                 loginScreen->clearFields();
-                currentState = AppState::REGISTER;
+                transitionTo(AppState::REGISTER);
             }
             // Check if LOGIN button is clicked
             else if (loginScreen->isLoginClicked(event, window)) {
@@ -113,7 +118,7 @@ void App::processEvents() {
                         feedScreen->setCurrentUser(currentUser);
                         feedScreen->reloadFeed();
                         
-                        currentState = AppState::FEED;
+                        transitionTo(AppState::FEED);
                     } else {
                         loginScreen->setErrorMessage("Invalid username or password.");
                     }
@@ -126,7 +131,7 @@ void App::processEvents() {
             // Check if LOGIN link is clicked
             if (registerScreen->isBackLinkClicked(event, window)) {
                 registerScreen->clearFields();
-                currentState = AppState::LOGIN;
+                transitionTo(AppState::LOGIN);
             }
             // Check if REGISTER button is clicked
             else if (registerScreen->isRegisterClicked(event, window)) {
@@ -150,7 +155,7 @@ void App::processEvents() {
                     if (success) {
                         registerScreen->clearFields();
                         loginScreen->setErrorMessage("Registration successful! Please login.");
-                        currentState = AppState::LOGIN;
+                        transitionTo(AppState::LOGIN);
                     } else {
                         registerScreen->setErrorMessage("Username is already taken.");
                     }
@@ -162,17 +167,17 @@ void App::processEvents() {
 
             if (feedScreen->isLogoutClicked(event)) {
                 currentUser = nullptr;
-                currentState = AppState::LOGIN;
+                transitionTo(AppState::LOGIN);
             }
             else if (feedScreen->isProfileClicked(event)) {
                 profileScreen->setCurrentUser(currentUser);
                 profileScreen->setTargetUser(currentUser);
-                currentState = AppState::PROFILE;
+                transitionTo(AppState::PROFILE);
             }
             else if (feedScreen->isSearchClicked(event)) {
                 searchScreen->setCurrentUser(currentUser);
                 searchScreen->reloadSearch();
-                currentState = AppState::SEARCH;
+                transitionTo(AppState::SEARCH);
             }
             else if (feedScreen->isHomeClicked(event)) {
                 feedScreen->reloadFeed();
@@ -191,7 +196,7 @@ void App::processEvents() {
                     if (targetPostPtr != nullptr) {
                         postDetailScreen->setCurrentUser(currentUser);
                         postDetailScreen->setTargetPost(*targetPostPtr, false);
-                        currentState = AppState::POST_DETAIL;
+                        transitionTo(AppState::POST_DETAIL);
                     }
                 } else {
                     std::string clicked = feedScreen->getClickedHandle();
@@ -201,7 +206,7 @@ void App::processEvents() {
                         if (target != nullptr) {
                             profileScreen->setCurrentUser(currentUser);
                             profileScreen->setTargetUser(target);
-                            currentState = AppState::PROFILE;
+                            transitionTo(AppState::PROFILE);
                         }
                     }
                 }
@@ -212,16 +217,16 @@ void App::processEvents() {
 
             if (profileScreen->isLogoutClicked(event)) {
                 currentUser = nullptr;
-                currentState = AppState::LOGIN;
+                transitionTo(AppState::LOGIN);
             }
             else if (profileScreen->isHomeClicked(event)) {
                 feedScreen->reloadFeed();
-                currentState = AppState::FEED;
+                transitionTo(AppState::FEED);
             }
             else if (profileScreen->isSearchClicked(event)) {
                 searchScreen->setCurrentUser(currentUser);
                 searchScreen->reloadSearch();
-                currentState = AppState::SEARCH;
+                transitionTo(AppState::SEARCH);
             }
             else if (profileScreen->isProfileClicked(event)) {
                 profileScreen->setTargetUser(currentUser);
@@ -240,7 +245,7 @@ void App::processEvents() {
                     if (targetPostPtr != nullptr) {
                         postDetailScreen->setCurrentUser(currentUser);
                         postDetailScreen->setTargetPost(*targetPostPtr, false);
-                        currentState = AppState::POST_DETAIL;
+                        transitionTo(AppState::POST_DETAIL);
                     }
                 } else {
                     std::string clicked = profileScreen->getClickedHandle();
@@ -259,21 +264,21 @@ void App::processEvents() {
 
             if (postDetailScreen->isLogoutClicked(event)) {
                 currentUser = nullptr;
-                currentState = AppState::LOGIN;
+                transitionTo(AppState::LOGIN);
             }
             else if (postDetailScreen->isHomeClicked(event)) {
                 feedScreen->reloadFeed();
-                currentState = AppState::FEED;
+                transitionTo(AppState::FEED);
             }
             else if (postDetailScreen->isSearchClicked(event)) {
                 searchScreen->setCurrentUser(currentUser);
                 searchScreen->reloadSearch();
-                currentState = AppState::SEARCH;
+                transitionTo(AppState::SEARCH);
             }
             else if (postDetailScreen->isProfileClicked(event)) {
                 profileScreen->setCurrentUser(currentUser);
                 profileScreen->setTargetUser(currentUser);
-                currentState = AppState::PROFILE;
+                transitionTo(AppState::PROFILE);
             }
         }
         else if (currentState == AppState::SEARCH) {
@@ -281,16 +286,16 @@ void App::processEvents() {
 
             if (searchScreen->isLogoutClicked(event)) {
                 currentUser = nullptr;
-                currentState = AppState::LOGIN;
+                transitionTo(AppState::LOGIN);
             }
             else if (searchScreen->isHomeClicked(event)) {
                 feedScreen->reloadFeed();
-                currentState = AppState::FEED;
+                transitionTo(AppState::FEED);
             }
             else if (searchScreen->isProfileClicked(event)) {
                 profileScreen->setCurrentUser(currentUser);
                 profileScreen->setTargetUser(currentUser);
-                currentState = AppState::PROFILE;
+                transitionTo(AppState::PROFILE);
             }
             else if (searchScreen->isSearchClicked(event)) {
                 searchScreen->reloadSearch();
@@ -303,7 +308,7 @@ void App::processEvents() {
                     if (target != nullptr) {
                         profileScreen->setCurrentUser(currentUser);
                         profileScreen->setTargetUser(target);
-                        currentState = AppState::PROFILE;
+                        transitionTo(AppState::PROFILE);
                     }
                 }
             }
@@ -311,7 +316,34 @@ void App::processEvents() {
     }
 }
 
+#include <cmath>
+
 void App::update() {
+    // Animate background glows
+    float time = appClock.getElapsedTime().asSeconds();
+    glowTopLeft.setPosition(-150.f + std::sin(time * 0.5f) * 30.f, -150.f + std::cos(time * 0.3f) * 30.f);
+    glowBottomRight.setPosition(1280.f - 250.f + std::cos(time * 0.4f) * 40.f, 720.f - 150.f + std::sin(time * 0.6f) * 40.f);
+    glowCenter.setPosition(1280.f / 2.f - 400.f + std::sin(time * 0.2f) * 50.f, 720.f / 2.f - 400.f + std::cos(time * 0.25f) * 50.f);
+
+    if (isTransitioning) {
+        if (currentState != nextState) {
+            // Fading out to black
+            transitionAlpha += 15.0f; 
+            if (transitionAlpha >= 255.0f) {
+                transitionAlpha = 255.0f;
+                currentState = nextState; // Swap states while fully dark
+            }
+        } else {
+            // Fading in
+            transitionAlpha -= 15.0f;
+            if (transitionAlpha <= 0.0f) {
+                transitionAlpha = 0.0f;
+                isTransitioning = false;
+            }
+        }
+        transitionOverlay.setFillColor(sf::Color(0, 0, 0, static_cast<sf::Uint8>(transitionAlpha)));
+    }
+
     if (currentState == AppState::LOGIN) {
         loginScreen->update();
     } else if (currentState == AppState::REGISTER) {
@@ -335,7 +367,10 @@ void App::drawBackground() {
 }
 
 void App::transitionTo(AppState state) {
-    currentState = state; // We'll implement actual fade logic in Redesign7
+    if (state != currentState) {
+        nextState = state;
+        isTransitioning = true;
+    }
 }
 
 void App::render() {
@@ -357,6 +392,10 @@ void App::render() {
         postDetailScreen->draw(window);
     } else if (currentState == AppState::SEARCH) {
         searchScreen->draw(window);
+    }
+
+    if (isTransitioning) {
+        window.draw(transitionOverlay);
     }
 
     window.display();
