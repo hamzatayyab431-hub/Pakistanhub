@@ -29,6 +29,7 @@ private:
     std::unique_ptr<GlassButton> navSearch;
     std::unique_ptr<GlassButton> navProfile;
     std::unique_ptr<GlassButton> navLogout;
+    sf::RectangleShape navAccentLine;
 
     // Compose panel
     sf::RectangleShape composePanel;
@@ -36,9 +37,10 @@ private:
     std::unique_ptr<GlassButton> postButton;
 
     // Tabs UI
-    int activeTab; // 0 = For You, 1 = Following
+    int activeTab; // 0 = For You, 1 = Following, 2 = Friends
     sf::Text forYouText;
     sf::Text followingText;
+    sf::Text friendsText;
     sf::RectangleShape tabIndicator;
 
     // Scrollable feed viewport

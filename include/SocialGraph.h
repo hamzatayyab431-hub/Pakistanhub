@@ -20,8 +20,10 @@ public:
     void unfollow(const std::string& follower, const std::string& following);
 
     bool isFollowing(const std::string& follower, const std::string& following) const;
+    bool isFriend(const std::string& userA, const std::string& userB) const;
     std::set<std::string> getFollowing(const std::string& username) const;
     std::set<std::string> getFollowers(const std::string& username) const;
+    std::set<std::string> getFriends(const std::string& username) const;
 };
 
 #endif // SOCIALGRAPH_H

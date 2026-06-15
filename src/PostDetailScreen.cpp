@@ -33,6 +33,11 @@ PostDetailScreen::PostDetailScreen(sf::Font& fnt, UserManager& um, PostManager& 
     navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
     navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
 
+    // Nav accent line
+    navAccentLine.setPosition(0.0f, 60.0f);
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
+    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+
     // Reply area background
     replyBackground.setPosition(100.0f, 630.0f);
     replyBackground.setSize(sf::Vector2f(1080.0f, 80.0f));
@@ -105,6 +110,7 @@ void PostDetailScreen::draw(sf::RenderWindow& window) {
     navSearch->draw(window);
     navProfile->draw(window);
     navLogout->draw(window);
+    window.draw(navAccentLine);
 
     // 2. Draw Main PostCard
     if (postCard) {

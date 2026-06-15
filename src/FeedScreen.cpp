@@ -35,6 +35,11 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentM
     navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
     navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
 
+    // Nav accent line
+    navAccentLine.setPosition(0.0f, 60.0f);
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
+    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+
     // Compose panel background
     composePanel.setPosition(100.0f, 80.0f);
     composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
@@ -84,6 +89,12 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentM
     followingText.setString("Following");
     followingText.setPosition(220.0f, 205.0f);
 
+    friendsText.setFont(font);
+    friendsText.setCharacterSize(16);
+    friendsText.setStyle(sf::Text::Bold);
+    friendsText.setString("Friends");
+    friendsText.setPosition(340.0f, 205.0f);
+
     tabIndicator.setSize(sf::Vector2f(70.0f, 3.0f));
     tabIndicator.setFillColor(sf::Color(0, 166, 81));
     tabIndicator.setPosition(120.0f, 230.0f);
@@ -115,13 +126,21 @@ void FeedScreen::reloadFeed() {
     if (activeTab == 0) {
         forYouText.setFillColor(sf::Color(0, 166, 81));
         followingText.setFillColor(sf::Color(255, 255, 255, 150));
+        friendsText.setFillColor(sf::Color(255, 255, 255, 150));
         tabIndicator.setSize(sf::Vector2f(forYouText.getGlobalBounds().width, 3.0f));
         tabIndicator.setPosition(forYouText.getPosition().x, 230.0f);
-    } else {
+    } else if (activeTab == 1) {
         forYouText.setFillColor(sf::Color(255, 255, 255, 150));
         followingText.setFillColor(sf::Color(0, 166, 81));
+        friendsText.setFillColor(sf::Color(255, 255, 255, 150));
         tabIndicator.setSize(sf::Vector2f(followingText.getGlobalBounds().width, 3.0f));
         tabIndicator.setPosition(followingText.getPosition().x, 230.0f);
+    } else {
+        forYouText.setFillColor(sf::Color(255, 255, 255, 150));
+        followingText.setFillColor(sf::Color(255, 255, 255, 150));
+        friendsText.setFillColor(sf::Color(0, 166, 81));
+        tabIndicator.setSize(sf::Vector2f(friendsText.getGlobalBounds().width, 3.0f));
+        tabIndicator.setPosition(friendsText.getPosition().x, 230.0f);
     }
 
     float y = 10.0f;
@@ -130,6 +149,13 @@ void FeedScreen::reloadFeed() {
         if (activeTab == 1 && currentUser != nullptr) {
             std::string author = post.getAuthorUsername();
             if (author != currentUser->getUsername() && !socialGraph.isFollowing(currentUser->getUsername(), author)) {
+                continue;
+            }
+        }
+        // Filter Friends tab: only posts by mutual friends (or self)
+        if (activeTab == 2 && currentUser != nullptr) {
+            std::string author = post.getAuthorUsername();
+            if (author != currentUser->getUsername() && !socialGraph.isFriend(currentUser->getUsername(), author)) {
                 continue;
             }
         }
@@ -158,6 +184,7 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     navSearch->draw(window);
     navProfile->draw(window);
     navLogout->draw(window);
+    window.draw(navAccentLine);
 
     // 2. Draw Compose area
     window.draw(composePanel);
@@ -167,6 +194,7 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     // 3. Draw Tabs UI
     window.draw(forYouText);
     window.draw(followingText);
+    window.draw(friendsText);
     window.draw(tabIndicator);
 
     // 4. Draw scrollable feed area with clipping view
@@ -208,6 +236,12 @@ void FeedScreen::handleEvent(sf::Event& event) {
         } else if (activeTab != 1) {
             followingText.setFillColor(sf::Color(255, 255, 255, 150));
         }
+
+        if (friendsText.getGlobalBounds().contains(mousePos) && activeTab != 2) {
+            friendsText.setFillColor(sf::Color::White);
+        } else if (activeTab != 2) {
+            friendsText.setFillColor(sf::Color(255, 255, 255, 150));
+        }
     }
 
     // Handle tab click switching
@@ -220,6 +254,11 @@ void FeedScreen::handleEvent(sf::Event& event) {
         }
         if (followingText.getGlobalBounds().contains(mousePos) && activeTab != 1) {
             activeTab = 1;
+            reloadFeed();
+            return;
+        }
+        if (friendsText.getGlobalBounds().contains(mousePos) && activeTab != 2) {
+            activeTab = 2;
             reloadFeed();
             return;
         }

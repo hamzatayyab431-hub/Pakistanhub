@@ -26,6 +26,10 @@ private:
     sf::RectangleShape commentButtonRect;
     sf::Text commentText;
 
+    sf::CircleShape avatarCircle;
+    sf::Text avatarLetter;
+    sf::RectangleShape accentBar;
+
 public:
     PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz, bool liked = false, int commentsCount = 0);
 

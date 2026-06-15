@@ -32,6 +32,9 @@ private:
 
     // Profile Header card
     sf::RectangleShape headerCard;
+    sf::CircleShape avatarCircle;
+    sf::Text avatarLetter;
+    sf::RectangleShape navAccentLine;
     sf::Text nameText;
     sf::Text handleText;
     sf::Text bioText;

@@ -20,6 +20,9 @@ private:
     bool isHovered;
 
     sf::RectangleShape backgroundRect;
+    sf::RectangleShape accentBar;
+    sf::CircleShape avatarCircle;
+    sf::Text avatarLetter;
     sf::Text displayNameText;
     sf::Text usernameText;
     sf::Text statsText;
@@ -50,6 +53,7 @@ private:
     std::unique_ptr<GlassButton> navSearch;
     std::unique_ptr<GlassButton> navProfile;
     std::unique_ptr<GlassButton> navLogout;
+    sf::RectangleShape navAccentLine;
 
     // Search input
     std::unique_ptr<TextInput> searchInput;

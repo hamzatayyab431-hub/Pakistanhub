@@ -12,6 +12,7 @@ private:
     sf::Vector2f size;
 
     sf::RectangleShape backgroundRect;
+    sf::RectangleShape accentBar;
     sf::Text authorText;
     sf::Text dateText;
     sf::Text contentText;

@@ -32,6 +32,7 @@ private:
     std::unique_ptr<GlassButton> navSearch;
     std::unique_ptr<GlassButton> navProfile;
     std::unique_ptr<GlassButton> navLogout;
+    sf::RectangleShape navAccentLine;
 
     // Full Post Card representation
     std::unique_ptr<PostCard> postCard;

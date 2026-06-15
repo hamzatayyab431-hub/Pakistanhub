@@ -97,3 +97,18 @@ std::set<std::string> SocialGraph::getFollowers(const std::string& username) con
     }
     return followersList;
 }
+
+bool SocialGraph::isFriend(const std::string& userA, const std::string& userB) const {
+    return isFollowing(userA, userB) && isFollowing(userB, userA);
+}
+
+std::set<std::string> SocialGraph::getFriends(const std::string& username) const {
+    std::set<std::string> friends;
+    std::set<std::string> following = getFollowing(username);
+    for (const auto& user : following) {
+        if (isFollowing(user, username)) {
+            friends.insert(user);
+        }
+    }
+    return friends;
+}

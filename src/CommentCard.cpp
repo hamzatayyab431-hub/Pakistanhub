@@ -78,14 +78,19 @@ void CommentCard::setPosition(const sf::Vector2f& pos) {
     backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     backgroundRect.setOutlineThickness(1.0f);
 
-    // Text positions
-    authorText.setPosition(position.x + 20.0f, position.y + 12.0f);
+    // Green accent bar on left side
+    accentBar.setPosition(position.x, position.y);
+    accentBar.setSize(sf::Vector2f(3.0f, size.y));
+    accentBar.setFillColor(sf::Color(0, 166, 81, 100)); // Green at alpha 100
+
+    // Text positions (shifted right for accent bar)
+    authorText.setPosition(position.x + 28.0f, position.y + 12.0f);
     
     // Position date dynamically after author text to prevent overlapping
     float authorWidth = authorText.getGlobalBounds().width;
-    dateText.setPosition(position.x + 20.0f + authorWidth + 12.0f, position.y + 14.0f);
+    dateText.setPosition(position.x + 28.0f + authorWidth + 12.0f, position.y + 14.0f);
 
-    contentText.setPosition(position.x + 20.0f, position.y + 38.0f);
+    contentText.setPosition(position.x + 28.0f, position.y + 38.0f);
 }
 
 void CommentCard::draw(sf::RenderWindow& window) {
@@ -99,6 +104,7 @@ void CommentCard::draw(sf::RenderWindow& window) {
     }
 
     window.draw(backgroundRect);
+    window.draw(accentBar);
     window.draw(authorText);
     window.draw(dateText);
     window.draw(contentText);

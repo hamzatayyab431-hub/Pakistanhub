@@ -25,25 +25,47 @@ SearchResultCard::SearchResultCard(User* usr, sf::Font& fnt, const sf::Vector2f&
     backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60));
     backgroundRect.setOutlineThickness(1.0f);
 
+    // Green accent bar on left
+    accentBar.setPosition(position.x, position.y);
+    accentBar.setSize(sf::Vector2f(4.0f, size.y));
+    accentBar.setFillColor(sf::Color(0, 166, 81));
+
+    // Avatar circle with user initial
+    avatarCircle.setRadius(22.0f);
+    avatarCircle.setPosition(position.x + 16.0f, position.y + 18.0f);
+    avatarCircle.setFillColor(sf::Color(0, 166, 81, 25));
+    avatarCircle.setOutlineColor(sf::Color(0, 166, 81, 180));
+    avatarCircle.setOutlineThickness(1.5f);
+
+    std::string initial(1, static_cast<char>(std::toupper(user->getDisplayName()[0])));
+    avatarLetter.setFont(font);
+    avatarLetter.setCharacterSize(20);
+    avatarLetter.setStyle(sf::Text::Bold);
+    avatarLetter.setFillColor(sf::Color::White);
+    avatarLetter.setString(initial);
+    sf::FloatRect alBounds = avatarLetter.getLocalBounds();
+    avatarLetter.setOrigin(alBounds.left + alBounds.width / 2.0f, alBounds.top + alBounds.height / 2.0f);
+    avatarLetter.setPosition(position.x + 16.0f + 22.0f, position.y + 18.0f + 22.0f);
+
     displayNameText.setFont(font);
     displayNameText.setCharacterSize(16);
     displayNameText.setStyle(sf::Text::Bold);
     displayNameText.setFillColor(sf::Color::White);
     displayNameText.setString(user->getDisplayName());
-    displayNameText.setPosition(position.x + 20.0f, position.y + 15.0f);
+    displayNameText.setPosition(position.x + 68.0f, position.y + 15.0f);
 
     usernameText.setFont(font);
     usernameText.setCharacterSize(13);
     usernameText.setFillColor(sf::Color(255, 255, 255, 140));
     usernameText.setString("@" + user->getUsername());
     float nameWidth = displayNameText.getGlobalBounds().width;
-    usernameText.setPosition(position.x + 20.0f + nameWidth + 8.0f, position.y + 17.0f);
+    usernameText.setPosition(position.x + 68.0f + nameWidth + 8.0f, position.y + 17.0f);
 
     statsText.setFont(font);
     statsText.setCharacterSize(12);
     statsText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green stats
     statsText.setString(std::to_string(user->getFollowerCount()) + " Followers  |  " + std::to_string(user->getFollowingCount()) + " Following");
-    statsText.setPosition(position.x + 20.0f, position.y + 45.0f);
+    statsText.setPosition(position.x + 68.0f, position.y + 45.0f);
 }
 
 void SearchResultCard::draw(sf::RenderWindow& window) {
@@ -56,6 +78,9 @@ void SearchResultCard::draw(sf::RenderWindow& window) {
     }
 
     window.draw(backgroundRect);
+    window.draw(accentBar);
+    window.draw(avatarCircle);
+    window.draw(avatarLetter);
     window.draw(displayNameText);
     window.draw(usernameText);
     window.draw(statsText);
@@ -112,6 +137,11 @@ SearchScreen::SearchScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Soci
     navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
     navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
     navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
+
+    // Nav accent line
+    navAccentLine.setPosition(0.0f, 60.0f);
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
+    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
 
     // Search query TextInput
     searchInput = std::make_unique<TextInput>(
@@ -179,6 +209,7 @@ void SearchScreen::draw(sf::RenderWindow& window) {
     navSearch->draw(window);
     navProfile->draw(window);
     navLogout->draw(window);
+    window.draw(navAccentLine);
 
     // 2. Draw search input
     searchInput->draw(window);

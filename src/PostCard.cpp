@@ -1,6 +1,7 @@
 #include "PostCard.h"
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 
 // Local helper to wrap text to a maximum width in pixels
 static std::string wrapText(const std::string& str, float width, const sf::Font& font, unsigned int charSize) {
@@ -73,7 +74,29 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
     commentText.setFont(font);
     commentText.setCharacterSize(12);
     commentText.setFillColor(sf::Color(255, 255, 255, 200));
-    commentText.setString("💬 " + std::to_string(commentsCount));
+    commentText.setString("Comments (" + std::to_string(commentsCount) + ")");
+
+    // Avatar circle
+    avatarCircle.setRadius(20);
+    avatarCircle.setOutlineColor(sf::Color(0, 166, 81, 180));
+    avatarCircle.setOutlineThickness(1.5f);
+    avatarCircle.setFillColor(sf::Color::Transparent);
+    avatarCircle.setPosition(position.x + 20, position.y + 15);
+
+    // Avatar letter (first char of author username, uppercased)
+    avatarLetter.setFont(font);
+    avatarLetter.setCharacterSize(18);
+    avatarLetter.setStyle(sf::Text::Bold);
+    avatarLetter.setFillColor(sf::Color::White);
+    std::string authorName = post.getAuthorUsername();
+    if (!authorName.empty()) {
+        avatarLetter.setString(std::string(1, static_cast<char>(std::toupper(authorName[0]))));
+    }
+
+    // Accent bar
+    accentBar.setSize(sf::Vector2f(4.0f, size.y));
+    accentBar.setFillColor(sf::Color(0, 166, 81));
+    accentBar.setPosition(position.x, position.y);
 
     // Set positions and sizes
     setPosition(position);
@@ -93,15 +116,32 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
     shadowRect.setSize(size + sf::Vector2f(4, 4));
     shadowRect.setFillColor(sf::Color(0, 166, 81, 35)); // low alpha green shadow
 
-    // Text positions
-    authorText.setPosition(position.x + 20.0f, position.y + 15.0f);
+    // Accent bar
+    accentBar.setPosition(position.x, position.y);
+    accentBar.setSize(sf::Vector2f(4.0f, size.y));
+
+    // Avatar circle
+    avatarCircle.setPosition(position.x + 16.0f, position.y + 14.0f);
+    avatarCircle.setRadius(20);
+
+    // Center avatar letter inside the circle
+    {
+        sf::FloatRect letterBounds = avatarLetter.getLocalBounds();
+        float cx = position.x + 16.0f + 20.0f; // circle center x
+        float cy = position.y + 14.0f + 20.0f; // circle center y
+        avatarLetter.setOrigin(letterBounds.left + letterBounds.width / 2.0f, letterBounds.top + letterBounds.height / 2.0f);
+        avatarLetter.setPosition(cx, cy);
+    }
+
+    // Text positions (shifted right by 36px for avatar)
+    authorText.setPosition(position.x + 56.0f, position.y + 15.0f);
     
     // Position handle dynamically after author text to prevent overlapping
     float authorWidth = authorText.getGlobalBounds().width;
-    handleText.setPosition(position.x + 20.0f + authorWidth + 8.0f, position.y + 17.0f);
+    handleText.setPosition(position.x + 56.0f + authorWidth + 8.0f, position.y + 17.0f);
 
-    contentText.setPosition(position.x + 20.0f, position.y + 45.0f);
-    dateText.setPosition(position.x + 20.0f, position.y + size.y - 30.0f);
+    contentText.setPosition(position.x + 56.0f, position.y + 45.0f);
+    dateText.setPosition(position.x + 56.0f, position.y + size.y - 30.0f);
 
     // Like button placement
     likeButtonRect.setSize(sf::Vector2f(100.0f, 25.0f));
@@ -111,13 +151,13 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
     likeText.setPosition(position.x + size.x - 220.0f, position.y + size.y - 28.0f);
 
     // Comment button placement
-    commentButtonRect.setSize(sf::Vector2f(100.0f, 25.0f));
-    commentButtonRect.setPosition(position.x + size.x - 120.0f, position.y + size.y - 32.0f);
+    commentButtonRect.setSize(sf::Vector2f(140.0f, 25.0f));
+    commentButtonRect.setPosition(position.x + size.x - 150.0f, position.y + size.y - 32.0f);
     commentButtonRect.setOutlineThickness(1.0f);
     commentButtonRect.setFillColor(sf::Color(255, 255, 255, 30));
     commentButtonRect.setOutlineColor(sf::Color(255, 255, 255, 60));
 
-    commentText.setPosition(position.x + size.x - 100.0f, position.y + size.y - 28.0f);
+    commentText.setPosition(position.x + size.x - 140.0f, position.y + size.y - 28.0f);
 
     toggleLikeState(); // Refresh color/labels
 }
@@ -147,6 +187,9 @@ void PostCard::draw(sf::RenderWindow& window) {
     }
 
     window.draw(backgroundRect);
+    window.draw(accentBar);
+    window.draw(avatarCircle);
+    window.draw(avatarLetter);
     window.draw(authorText);
     window.draw(handleText);
     window.draw(contentText);

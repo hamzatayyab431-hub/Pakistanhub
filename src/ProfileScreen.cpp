@@ -1,6 +1,7 @@
 #include "ProfileScreen.h"
 #include <algorithm>
 #include <iostream>
+#include <cctype>
 
 
 
@@ -42,6 +43,23 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     headerCard.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha
     headerCard.setOutlineThickness(1.0f);
 
+    // Nav accent line
+    navAccentLine.setPosition(0.0f, 60.0f);
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
+    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+
+    // Avatar circle on profile header
+    avatarCircle.setRadius(30.0f);
+    avatarCircle.setPosition(120.0f, 85.0f);
+    avatarCircle.setFillColor(sf::Color(0, 166, 81, 25));
+    avatarCircle.setOutlineColor(sf::Color(0, 166, 81, 200));
+    avatarCircle.setOutlineThickness(2.0f);
+
+    avatarLetter.setFont(font);
+    avatarLetter.setCharacterSize(26);
+    avatarLetter.setStyle(sf::Text::Bold);
+    avatarLetter.setFillColor(sf::Color::White);
+
     // Setup empty state elements
     emptyCard.setSize(sf::Vector2f(600.0f, 80.0f));
     emptyCard.setPosition(240.0f, 150.0f);
@@ -57,12 +75,12 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     emptyText.setOrigin(etBounds.left + etBounds.width / 2.0f, etBounds.top + etBounds.height / 2.0f);
     emptyText.setPosition(540.0f, 190.0f); // Center relative to viewport coordinates (540, 190)
 
-    // Profile Display Name
+    // Profile Display Name (shifted right for avatar)
     nameText.setFont(font);
     nameText.setCharacterSize(22);
     nameText.setStyle(sf::Text::Bold);
     nameText.setFillColor(sf::Color::White);
-    nameText.setPosition(120.0f, 90.0f);
+    nameText.setPosition(195.0f, 88.0f);
 
     // Profile Handle (@username)
     handleText.setFont(font);
@@ -73,14 +91,14 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     bioText.setFont(font);
     bioText.setCharacterSize(14);
     bioText.setFillColor(sf::Color(255, 255, 255, 180));
-    bioText.setPosition(120.0f, 138.0f);
+    bioText.setPosition(195.0f, 138.0f);
 
     // Profile Stats counts
     statsText.setFont(font);
     statsText.setCharacterSize(14);
     statsText.setStyle(sf::Text::Bold);
     statsText.setFillColor(sf::Color(0, 166, 81));
-    statsText.setPosition(120.0f, 172.0f);
+    statsText.setPosition(195.0f, 172.0f);
 
     // Follow Button
     followButton = std::make_unique<GlassButton>(
@@ -125,7 +143,17 @@ void ProfileScreen::reloadProfile() {
     handleText.setPosition(nameText.getPosition().x + nameWidth + 10.0f, nameText.getPosition().y + 6.0f);
 
     bioText.setString(targetUser->getBio().empty() ? "No bio written yet." : targetUser->getBio());
-    statsText.setString(std::to_string(targetUser->getFollowerCount()) + " Followers   |   " + std::to_string(targetUser->getFollowingCount()) + " Following");
+
+    // Friends count
+    int friendsCount = static_cast<int>(socialGraph.getFriends(targetUser->getUsername()).size());
+    statsText.setString(std::to_string(targetUser->getFollowerCount()) + " Followers   |   " + std::to_string(targetUser->getFollowingCount()) + " Following   |   " + std::to_string(friendsCount) + " Friends");
+
+    // Update avatar letter
+    std::string initial(1, static_cast<char>(std::toupper(targetUser->getDisplayName()[0])));
+    avatarLetter.setString(initial);
+    sf::FloatRect alBounds = avatarLetter.getLocalBounds();
+    avatarLetter.setOrigin(alBounds.left + alBounds.width / 2.0f, alBounds.top + alBounds.height / 2.0f);
+    avatarLetter.setPosition(120.0f + 30.0f, 85.0f + 30.0f);
 
     // Configure Follow button based on relationship
     if (currentUser != nullptr && targetUser != nullptr) {
@@ -174,9 +202,12 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     navSearch->draw(window);
     navProfile->draw(window);
     navLogout->draw(window);
+    window.draw(navAccentLine);
 
     // Draw header card panel
     window.draw(headerCard);
+    window.draw(avatarCircle);
+    window.draw(avatarLetter);
     window.draw(nameText);
     window.draw(handleText);
     window.draw(bioText);
