@@ -31,6 +31,11 @@ public:
 
     int getLikeCount() const;
     void setLikeCount(int count);
+
+    // Serialization & Date Helpers
+    std::string getFormattedDate() const;
+    std::string serialize() const;
+    static Post deserialize(const std::string& data);
 };
 
 #endif // POST_H

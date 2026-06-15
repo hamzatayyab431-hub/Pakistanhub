@@ -128,7 +128,8 @@ void LoginScreen::clearFields() {
 }
 
 bool LoginScreen::isLoginClicked(sf::Event& event, sf::RenderWindow& window) {
-    return loginButton->isClicked(event, window);
+    (void)window; // Suppress unused warning
+    return loginButton->isClicked(event);
 }
 
 bool LoginScreen::isRegisterLinkClicked(sf::Event& event, sf::RenderWindow& window) {

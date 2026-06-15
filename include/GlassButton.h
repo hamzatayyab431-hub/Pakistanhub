@@ -22,7 +22,7 @@ public:
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
 
-    bool isClicked(sf::Event& event, sf::RenderWindow& window);
+    bool isClicked(sf::Event& event);
     void setPosition(const sf::Vector2f& pos);
 };
 

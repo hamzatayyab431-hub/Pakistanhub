@@ -3,8 +3,10 @@
 
 #include <SFML/Graphics.hpp>
 #include "UserManager.h"
+#include "PostManager.h"
 #include "LoginScreen.h"
 #include "RegisterScreen.h"
+#include "FeedScreen.h"
 #include <memory>
 
 class App {
@@ -17,12 +19,12 @@ private:
 
     sf::Font font;
     UserManager userManager;
+    PostManager postManager;
     User* currentUser;
 
     std::unique_ptr<LoginScreen> loginScreen;
     std::unique_ptr<RegisterScreen> registerScreen;
-
-    sf::Text feedTempText;
+    std::unique_ptr<FeedScreen> feedScreen;
 
     void processEvents();
     void update();

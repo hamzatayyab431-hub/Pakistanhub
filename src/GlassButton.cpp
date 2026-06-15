@@ -50,7 +50,7 @@ void GlassButton::handleEvent(sf::Event& event) {
     }
 }
 
-bool GlassButton::isClicked(sf::Event& event, sf::RenderWindow& window) {
+bool GlassButton::isClicked(sf::Event& event) {
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
         return backgroundRect.getGlobalBounds().contains(mousePos);

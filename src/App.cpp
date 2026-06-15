@@ -10,20 +10,18 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
         std::cerr << "Error: Failed to load font assets/fonts/Roboto-Regular.ttf!\n";
     }
 
-    // Load persisted users
+    // Load persisted users and posts
     if (!userManager.loadFromFile("data/users.txt")) {
         std::cerr << "Warning: Could not open data/users.txt, starting with empty database.\n";
+    }
+    if (!postManager.loadFromFile("data/posts.txt")) {
+        std::cerr << "Warning: Could not open data/posts.txt, starting with empty database.\n";
     }
 
     // Initialize screen objects
     loginScreen = std::make_unique<LoginScreen>(font);
     registerScreen = std::make_unique<RegisterScreen>(font);
-
-    // Setup temporary FEED screen text
-    feedTempText.setFont(font);
-    feedTempText.setCharacterSize(24);
-    feedTempText.setFillColor(sf::Color::White);
-    feedTempText.setPosition(100.0f, 100.0f);
+    feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager);
 }
 
 void App::run() {
@@ -63,6 +61,11 @@ void App::processEvents() {
                     if (userPtr != nullptr) {
                         currentUser = userPtr;
                         loginScreen->clearFields();
+                        
+                        // Set up and load user feed screen
+                        feedScreen->setCurrentUser(currentUser);
+                        feedScreen->reloadFeed();
+                        
                         currentState = AppState::FEED;
                     } else {
                         loginScreen->setErrorMessage("Invalid username or password.");
@@ -103,8 +106,10 @@ void App::processEvents() {
             }
         }
         else if (currentState == AppState::FEED) {
-            // Click to logout during Phase 2 skeleton testing
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            feedScreen->handleEvent(event);
+
+            // Check if logout was clicked
+            if (feedScreen->isLogoutClicked(event, window)) {
                 currentUser = nullptr;
                 currentState = AppState::LOGIN;
             }
@@ -113,15 +118,7 @@ void App::processEvents() {
 }
 
 void App::update() {
-    if (currentState == AppState::FEED && currentUser != nullptr) {
-        std::string welcome = "Welcome to PakistanHub, " + currentUser->getDisplayName() + "!\n\n";
-        welcome += "Username: @" + currentUser->getUsername() + "\n";
-        welcome += "Bio: " + currentUser->getBio() + "\n";
-        welcome += "Followers: " + std::to_string(currentUser->getFollowerCount()) + "\n";
-        welcome += "Following: " + std::to_string(currentUser->getFollowingCount()) + "\n\n";
-        welcome += "--- Feed Area Skeleton ---\n\n[Click anywhere inside window to LOGOUT]";
-        feedTempText.setString(welcome);
-    }
+    // AppState::FEED updates are handled inside FeedScreen
 }
 
 void App::render() {
@@ -134,7 +131,7 @@ void App::render() {
     } else if (currentState == AppState::REGISTER) {
         registerScreen->draw(window);
     } else if (currentState == AppState::FEED) {
-        window.draw(feedTempText);
+        feedScreen->draw(window);
     }
 
     window.display();

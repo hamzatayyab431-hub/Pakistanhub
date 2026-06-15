@@ -142,7 +142,8 @@ void RegisterScreen::clearFields() {
 }
 
 bool RegisterScreen::isRegisterClicked(sf::Event& event, sf::RenderWindow& window) {
-    return registerButton->isClicked(event, window);
+    (void)window; // Suppress unused warning
+    return registerButton->isClicked(event);
 }
 
 bool RegisterScreen::isBackLinkClicked(sf::Event& event, sf::RenderWindow& window) {
