@@ -6,14 +6,14 @@ GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Fo
     // Configure background rectangle
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 12% alpha white
-    backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 150)); // Pakistan Green with 58% alpha
+    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
+    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     backgroundRect.setOutlineThickness(1.0f);
 
     // Configure glow shadow
     shadowRect.setPosition(position - sf::Vector2f(2, 2));
     shadowRect.setSize(size + sf::Vector2f(4, 4));
-    shadowRect.setFillColor(sf::Color(0, 166, 81, 40)); // 15% alpha green
+    shadowRect.setFillColor(sf::Color(0, 166, 81, 40)); // 40 alpha green
     shadowRect.setOutlineThickness(0);
 
     // Configure label text
@@ -31,12 +31,12 @@ GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Fo
 
 void GlassButton::draw(sf::RenderWindow& window) {
     if (isHovered) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Lighten panel on hover
-        backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 255)); // Active green border
-        window.draw(shadowRect); // Draw glowing green shadow
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
+        backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 200)); // Active green border
+        window.draw(shadowRect); // Draw green glow shadow
     } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30));
-        backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 150));
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // Alpha 30 fill
+        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // Alpha 60 white border
     }
 
     window.draw(backgroundRect);
@@ -63,6 +63,5 @@ void GlassButton::setPosition(const sf::Vector2f& pos) {
     backgroundRect.setPosition(position);
     shadowRect.setPosition(position - sf::Vector2f(2, 2));
 
-    sf::FloatRect textRect = labelText.getLocalBounds();
     labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
 }

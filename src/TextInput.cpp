@@ -1,13 +1,13 @@
 #include "TextInput.h"
 
 TextInput::TextInput(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& placeholderStr, bool isPass)
-    : position(pos), size(sz), font(fnt), placeholder(placeholderStr), isFocused(false), isPassword(isPass) {
+    : position(pos), size(sz), font(fnt), placeholder(placeholderStr), isFocused(false), isPassword(isPass), isHovered(false) {
 
     // Configure main background rectangle
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 12% alpha white
-    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 100)); // 40% alpha white
+    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
+    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     backgroundRect.setOutlineThickness(1.0f);
 
     // Configure green shadow glow
@@ -44,11 +44,15 @@ void TextInput::updateDisplayedText() {
 
 void TextInput::draw(sf::RenderWindow& window) {
     if (isFocused) {
-        // Change border to green and draw the glowing shadow behind it
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50));
         backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 200));
         window.draw(shadowRect);
+    } else if (isHovered) {
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50));
+        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 120));
     } else {
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 100));
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30));
+        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60));
     }
 
     window.draw(backgroundRect);
@@ -64,6 +68,11 @@ void TextInput::draw(sf::RenderWindow& window) {
 }
 
 void TextInput::handleEvent(sf::Event& event) {
+    if (event.type == sf::Event::MouseMoved) {
+        sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
+        isHovered = backgroundRect.getGlobalBounds().contains(mousePos);
+    }
+
     if (event.type == sf::Event::MouseButtonPressed) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
         if (backgroundRect.getGlobalBounds().contains(mousePos)) {

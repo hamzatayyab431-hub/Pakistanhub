@@ -8,6 +8,7 @@ public:
     virtual ~UIComponent() = default;
     virtual void draw(sf::RenderWindow& window) = 0;
     virtual void handleEvent(sf::Event& event) = 0;
+    virtual void update() {}
 };
 
 #endif // UICOMPONENT_H

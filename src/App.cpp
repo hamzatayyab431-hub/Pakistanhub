@@ -112,12 +112,18 @@ void App::processEvents() {
         else if (currentState == AppState::FEED) {
             feedScreen->handleEvent(event);
 
-            // Check if logout was clicked
-            if (feedScreen->isLogoutClicked(event, window)) {
+            if (feedScreen->isLogoutClicked(event)) {
                 currentUser = nullptr;
                 currentState = AppState::LOGIN;
             }
-            // Check if user clicked a handle to view their profile
+            else if (feedScreen->isProfileClicked(event)) {
+                profileScreen->setCurrentUser(currentUser);
+                profileScreen->setTargetUser(currentUser);
+                currentState = AppState::PROFILE;
+            }
+            else if (feedScreen->isHomeClicked(event)) {
+                feedScreen->reloadFeed();
+            }
             else {
                 std::string clicked = feedScreen->getClickedHandle();
                 if (!clicked.empty()) {
@@ -134,12 +140,17 @@ void App::processEvents() {
         else if (currentState == AppState::PROFILE) {
             profileScreen->handleEvent(event);
 
-            // Check if Back to Feed is clicked
-            if (profileScreen->isBackClicked(event, window)) {
-                feedScreen->reloadFeed(); // reload feed to show any new follow updates
+            if (profileScreen->isLogoutClicked(event)) {
+                currentUser = nullptr;
+                currentState = AppState::LOGIN;
+            }
+            else if (profileScreen->isHomeClicked(event)) {
+                feedScreen->reloadFeed();
                 currentState = AppState::FEED;
             }
-            // Check if another username was clicked on ProfileScreen (hops profile)
+            else if (profileScreen->isProfileClicked(event)) {
+                profileScreen->setTargetUser(currentUser);
+            }
             else {
                 std::string clicked = profileScreen->getClickedHandle();
                 if (!clicked.empty()) {
@@ -155,12 +166,32 @@ void App::processEvents() {
 }
 
 void App::update() {
-    // UI components handle their own updates during drawing
+    if (currentState == AppState::LOGIN) {
+        loginScreen->update();
+    } else if (currentState == AppState::REGISTER) {
+        registerScreen->update();
+    } else if (currentState == AppState::FEED) {
+        feedScreen->update();
+    } else if (currentState == AppState::PROFILE) {
+        profileScreen->update();
+    }
 }
 
 void App::render() {
-    // Clear screen with deep dark background (#0D1117)
-    window.clear(sf::Color(0x0D, 0x11, 0x17));
+    // Clear screen
+    window.clear(sf::Color(13, 17, 23));
+
+    // Draw subtle vertical gradient from #0D1117 (top) to #111827 (bottom)
+    sf::VertexArray gradient(sf::Quads, 4);
+    gradient[0].position = sf::Vector2f(0.f, 0.f);
+    gradient[0].color = sf::Color(13, 17, 23);
+    gradient[1].position = sf::Vector2f(1280.f, 0.f);
+    gradient[1].color = sf::Color(13, 17, 23);
+    gradient[2].position = sf::Vector2f(1280.f, 720.f);
+    gradient[2].color = sf::Color(17, 24, 39);
+    gradient[3].position = sf::Vector2f(0.f, 720.f);
+    gradient[3].color = sf::Color(17, 24, 39);
+    window.draw(gradient);
 
     // Render active screen
     if (currentState == AppState::LOGIN) {

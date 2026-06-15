@@ -2,22 +2,17 @@
 #include <algorithm>
 #include <iostream>
 
-// Local helper to center sf::Text horizontally
-static void centerTextHorizontally(sf::Text& text, float centerX) {
-    sf::FloatRect bounds = text.getLocalBounds();
-    text.setOrigin(bounds.left + bounds.width / 2.0f, 0.0f);
-    text.setPosition(centerX, text.getPosition().y);
-}
+
 
 FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGraph& sg)
     : font(fnt), userManager(um), postManager(pm), socialGraph(sg), currentUser(nullptr),
-      activeTab(0), scrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle("") {
+      activeTab(0), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle("") {
 
     // Configure header top bar
     headerBackground.setPosition(0.0f, 0.0f);
     headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
-    headerBackground.setFillColor(sf::Color(13, 17, 23, 220)); // Deep dark near-black
-    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 40));
+    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
+    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     headerBackground.setOutlineThickness(1.0f);
 
     // App logo
@@ -28,25 +23,38 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGr
     logoText.setString("PakistanHub");
     logoText.setPosition(40.0f, 15.0f);
 
-    // Profile text
-    profileText.setFont(font);
-    profileText.setCharacterSize(14);
-    profileText.setFillColor(sf::Color::White);
-    profileText.setPosition(920.0f, 20.0f);
+    // Status text
+    statusText.setFont(font);
+    statusText.setCharacterSize(13);
+    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setPosition(200.0f, 22.0f);
 
-    // Logout text button
-    logoutText.setFont(font);
-    logoutText.setCharacterSize(14);
-    logoutText.setFillColor(sf::Color(220, 53, 69)); // Red button
-    logoutText.setString("Logout");
-    logoutText.setPosition(1180.0f, 20.0f);
+    // Navigation buttons
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
 
     // Compose panel background
     composePanel.setPosition(100.0f, 80.0f);
     composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
-    composePanel.setFillColor(sf::Color(255, 255, 255, 15)); // Frosted panel
-    composePanel.setOutlineColor(sf::Color(255, 255, 255, 50));
+    composePanel.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic panel
+    composePanel.setOutlineColor(sf::Color(255, 255, 255, 60));
     composePanel.setOutlineThickness(1.0f);
+
+    // Setup empty state elements
+    emptyCard.setSize(sf::Vector2f(600.0f, 80.0f));
+    emptyCard.setPosition(240.0f, 150.0f);
+    emptyCard.setFillColor(sf::Color(255, 255, 255, 30));
+    emptyCard.setOutlineColor(sf::Color(255, 255, 255, 60));
+    emptyCard.setOutlineThickness(1.0f);
+
+    emptyText.setFont(font);
+    emptyText.setCharacterSize(15);
+    emptyText.setFillColor(sf::Color(255, 255, 255, 200));
+    emptyText.setString("No posts yet. Be the first to post!");
+    sf::FloatRect etBounds = emptyText.getLocalBounds();
+    emptyText.setOrigin(etBounds.left + etBounds.width / 2.0f, etBounds.top + etBounds.height / 2.0f);
+    emptyText.setPosition(540.0f, 190.0f); // Center relative to viewport coordinates (540, 190)
 
     // Compose input field
     composeInput = std::make_unique<TextInput>(
@@ -88,17 +96,14 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGr
 void FeedScreen::setCurrentUser(User* user) {
     currentUser = user;
     if (currentUser != nullptr) {
-        profileText.setString(currentUser->getDisplayName() + " (@" + currentUser->getUsername() + ")");
-        
-        // Reposition logout text slightly depending on name length
-        sf::FloatRect pBounds = profileText.getGlobalBounds();
-        logoutText.setPosition(std::max(1180.0f, pBounds.left + pBounds.width + 30.0f), 20.0f);
+        statusText.setString("Logged in as @" + currentUser->getUsername());
     }
 }
 
 void FeedScreen::reloadFeed() {
     postCards.clear();
     scrollOffset = 0.0f;
+    targetScrollOffset = 0.0f;
     feedViewport.setCenter(540.0f, 230.0f);
 
     // Load sorted posts
@@ -145,8 +150,10 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     // 1. Draw static Header
     window.draw(headerBackground);
     window.draw(logoText);
-    window.draw(profileText);
-    window.draw(logoutText);
+    window.draw(statusText);
+    navHome->draw(window);
+    navProfile->draw(window);
+    navLogout->draw(window);
 
     // 2. Draw Compose area
     window.draw(composePanel);
@@ -161,28 +168,29 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     // 4. Draw scrollable feed area with clipping view
     sf::View originalView = window.getView();
     window.setView(feedViewport);
-    for (const auto& card : postCards) {
-        card->draw(window);
+    if (postCards.empty()) {
+        window.draw(emptyCard);
+        window.draw(emptyText);
+    } else {
+        for (const auto& card : postCards) {
+            card->draw(window);
+        }
     }
     window.setView(originalView);
 }
 
 void FeedScreen::handleEvent(sf::Event& event) {
-    // Pass events to compose input and button
+    // Pass events to compose input, button and nav buttons
     composeInput->handleEvent(event);
     postButton->handleEvent(event);
+    navHome->handleEvent(event);
+    navProfile->handleEvent(event);
+    navLogout->handleEvent(event);
 
     // Handle mouse move highlights
     if (event.type == sf::Event::MouseMoved) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
         
-        // Logout button hover
-        if (logoutText.getGlobalBounds().contains(mousePos)) {
-            logoutText.setFillColor(sf::Color(220, 53, 69, 255));
-        } else {
-            logoutText.setFillColor(sf::Color(220, 53, 69, 180));
-        }
-
         // Tabs hover
         if (forYouText.getGlobalBounds().contains(mousePos) && activeTab != 0) {
             forYouText.setFillColor(sf::Color::White);
@@ -222,13 +230,11 @@ void FeedScreen::handleEvent(sf::Event& event) {
         }
     }
 
-    // Scroll wheel offset adjustment
+    // Scroll wheel target adjustment
     if (event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
-        scrollOffset -= event.mouseWheelScroll.delta * 40.0f;
-        if (scrollOffset < 0.0f) scrollOffset = 0.0f;
-        if (scrollOffset > maxScrollOffset) scrollOffset = maxScrollOffset;
-        
-        feedViewport.setCenter(540.0f, 230.0f + scrollOffset);
+        targetScrollOffset -= event.mouseWheelScroll.delta * 60.0f;
+        if (targetScrollOffset < 0.0f) targetScrollOffset = 0.0f;
+        if (targetScrollOffset > maxScrollOffset) targetScrollOffset = maxScrollOffset;
     }
 
     // Map screen mouse coords to feedViewport coordinates for scrollable cards
@@ -274,11 +280,24 @@ void FeedScreen::clearClickedHandle() {
     clickedHandle = "";
 }
 
-bool FeedScreen::isLogoutClicked(sf::Event& event, sf::RenderWindow& window) {
-    (void)window;
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
-        return logoutText.getGlobalBounds().contains(mousePos);
+void FeedScreen::update() {
+    float lerpFactor = 0.15f;
+    if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
+        scrollOffset += (targetScrollOffset - scrollOffset) * lerpFactor;
+    } else {
+        scrollOffset = targetScrollOffset;
     }
-    return false;
+    feedViewport.setCenter(540.0f, 230.0f + scrollOffset);
+}
+
+bool FeedScreen::isHomeClicked(sf::Event& event) {
+    return navHome->isClicked(event);
+}
+
+bool FeedScreen::isProfileClicked(sf::Event& event) {
+    return navProfile->isClicked(event);
+}
+
+bool FeedScreen::isLogoutClicked(sf::Event& event) {
+    return navLogout->isClicked(event);
 }

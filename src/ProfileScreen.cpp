@@ -2,29 +2,59 @@
 #include <algorithm>
 #include <iostream>
 
-static void centerTextHorizontally(sf::Text& text, float centerX) {
-    sf::FloatRect bounds = text.getLocalBounds();
-    text.setOrigin(bounds.left + bounds.width / 2.0f, 0.0f);
-    text.setPosition(centerX, text.getPosition().y);
-}
+
 
 ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGraph& sg)
     : font(fnt), userManager(um), postManager(pm), socialGraph(sg), currentUser(nullptr),
-      targetUser(nullptr), scrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle("") {
+      targetUser(nullptr), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle("") {
 
-    // Configure Back Link
-    backLink.setFont(font);
-    backLink.setCharacterSize(16);
-    backLink.setFillColor(sf::Color(0, 166, 81, 180)); // Muted Green
-    backLink.setString("<- Back to Feed");
-    backLink.setPosition(100.0f, 40.0f);
+    // Configure header top bar (identical to FeedScreen)
+    headerBackground.setPosition(0.0f, 0.0f);
+    headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
+    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
+    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
+    headerBackground.setOutlineThickness(1.0f);
+
+    // App logo
+    logoText.setFont(font);
+    logoText.setCharacterSize(22);
+    logoText.setStyle(sf::Text::Bold);
+    logoText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    logoText.setString("PakistanHub");
+    logoText.setPosition(40.0f, 15.0f);
+
+    // Status text
+    statusText.setFont(font);
+    statusText.setCharacterSize(13);
+    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setPosition(200.0f, 22.0f);
+
+    // Navigation buttons
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
 
     // Profile header card background
     headerCard.setPosition(100.0f, 75.0f);
     headerCard.setSize(sf::Vector2f(1080.0f, 140.0f));
-    headerCard.setFillColor(sf::Color(255, 255, 255, 20)); // Frosted panel
-    headerCard.setOutlineColor(sf::Color(255, 255, 255, 60));
+    headerCard.setFillColor(sf::Color(255, 255, 255, 30)); // Frosted panel (30 alpha)
+    headerCard.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha
     headerCard.setOutlineThickness(1.0f);
+
+    // Setup empty state elements
+    emptyCard.setSize(sf::Vector2f(600.0f, 80.0f));
+    emptyCard.setPosition(240.0f, 150.0f);
+    emptyCard.setFillColor(sf::Color(255, 255, 255, 30));
+    emptyCard.setOutlineColor(sf::Color(255, 255, 255, 60));
+    emptyCard.setOutlineThickness(1.0f);
+
+    emptyText.setFont(font);
+    emptyText.setCharacterSize(15);
+    emptyText.setFillColor(sf::Color(255, 255, 255, 200));
+    emptyText.setString("No posts yet.");
+    sf::FloatRect etBounds = emptyText.getLocalBounds();
+    emptyText.setOrigin(etBounds.left + etBounds.width / 2.0f, etBounds.top + etBounds.height / 2.0f);
+    emptyText.setPosition(540.0f, 190.0f); // Center relative to viewport coordinates (540, 190)
 
     // Profile Display Name
     nameText.setFont(font);
@@ -66,6 +96,9 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, So
 
 void ProfileScreen::setCurrentUser(User* user) {
     currentUser = user;
+    if (currentUser != nullptr) {
+        statusText.setString("Logged in as @" + currentUser->getUsername());
+    }
 }
 
 void ProfileScreen::setTargetUser(User* user) {
@@ -76,6 +109,7 @@ void ProfileScreen::setTargetUser(User* user) {
 void ProfileScreen::reloadProfile() {
     postCards.clear();
     scrollOffset = 0.0f;
+    targetScrollOffset = 0.0f;
     feedViewport.setCenter(540.0f, 235.0f);
     clickedHandle = "";
 
@@ -129,8 +163,13 @@ void ProfileScreen::reloadProfile() {
 }
 
 void ProfileScreen::draw(sf::RenderWindow& window) {
-    // Draw back link
-    window.draw(backLink);
+    // 1. Draw static Header
+    window.draw(headerBackground);
+    window.draw(logoText);
+    window.draw(statusText);
+    navHome->draw(window);
+    navProfile->draw(window);
+    navLogout->draw(window);
 
     // Draw header card panel
     window.draw(headerCard);
@@ -147,8 +186,13 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     // Draw scrollable posts
     sf::View originalView = window.getView();
     window.setView(feedViewport);
-    for (const auto& card : postCards) {
-        card->draw(window);
+    if (postCards.empty()) {
+        window.draw(emptyCard);
+        window.draw(emptyText);
+    } else {
+        for (const auto& card : postCards) {
+            card->draw(window);
+        }
     }
     window.setView(originalView);
 }
@@ -156,15 +200,10 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
 void ProfileScreen::handleEvent(sf::Event& event) {
     if (currentUser == nullptr || targetUser == nullptr) return;
 
-    // Handle back button highlight
-    if (event.type == sf::Event::MouseMoved) {
-        sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
-        if (backLink.getGlobalBounds().contains(mousePos)) {
-            backLink.setFillColor(sf::Color(0, 166, 81, 255)); // Highlight green
-        } else {
-            backLink.setFillColor(sf::Color(0, 166, 81, 180));
-        }
-    }
+    // Delegate events to top nav buttons
+    navHome->handleEvent(event);
+    navProfile->handleEvent(event);
+    navLogout->handleEvent(event);
 
     // Handle Follow/Unfollow button action
     if (currentUser->getUsername() != targetUser->getUsername()) {
@@ -190,13 +229,11 @@ void ProfileScreen::handleEvent(sf::Event& event) {
         }
     }
 
-    // Scroll wheel offset adjustment
+    // Scroll wheel target adjustment
     if (event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
-        scrollOffset -= event.mouseWheelScroll.delta * 40.0f;
-        if (scrollOffset < 0.0f) scrollOffset = 0.0f;
-        if (scrollOffset > maxScrollOffset) scrollOffset = maxScrollOffset;
-        
-        feedViewport.setCenter(540.0f, 235.0f + scrollOffset);
+        targetScrollOffset -= event.mouseWheelScroll.delta * 60.0f;
+        if (targetScrollOffset < 0.0f) targetScrollOffset = 0.0f;
+        if (targetScrollOffset > maxScrollOffset) targetScrollOffset = maxScrollOffset;
     }
 
     // Map screen mouse coords to feedViewport coordinates for scrollable cards
@@ -234,13 +271,31 @@ void ProfileScreen::handleEvent(sf::Event& event) {
     }
 }
 
+void ProfileScreen::update() {
+    float lerpFactor = 0.15f;
+    if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
+        scrollOffset += (targetScrollOffset - scrollOffset) * lerpFactor;
+    } else {
+        scrollOffset = targetScrollOffset;
+    }
+    feedViewport.setCenter(540.0f, 235.0f + scrollOffset);
+}
+
 bool ProfileScreen::isBackClicked(sf::Event& event, sf::RenderWindow& window) {
     (void)window;
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
-        return backLink.getGlobalBounds().contains(mousePos);
-    }
-    return false;
+    return isHomeClicked(event);
+}
+
+bool ProfileScreen::isHomeClicked(sf::Event& event) {
+    return navHome->isClicked(event);
+}
+
+bool ProfileScreen::isProfileClicked(sf::Event& event) {
+    return navProfile->isClicked(event);
+}
+
+bool ProfileScreen::isLogoutClicked(sf::Event& event) {
+    return navLogout->isClicked(event);
 }
 
 std::string ProfileScreen::getClickedHandle() {

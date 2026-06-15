@@ -83,12 +83,13 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
     // Background and shadow boxes
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 20));
+    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
+    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     backgroundRect.setOutlineThickness(1.0f);
 
     shadowRect.setPosition(position - sf::Vector2f(2, 2));
     shadowRect.setSize(size + sf::Vector2f(4, 4));
-    shadowRect.setFillColor(sf::Color(0, 166, 81, 35));
+    shadowRect.setFillColor(sf::Color(0, 166, 81, 35)); // low alpha green shadow
 
     // Text positions
     authorText.setPosition(position.x + 20.0f, position.y + 15.0f);
@@ -126,12 +127,12 @@ void PostCard::toggleLikeState() {
 
 void PostCard::draw(sf::RenderWindow& window) {
     if (isHovered) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 45)); // Muted hover glow
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
         backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 120));
         window.draw(shadowRect);
     } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 20));
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 80));
+        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // Alpha 30 fill
+        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // Alpha 60 outline
     }
 
     window.draw(backgroundRect);

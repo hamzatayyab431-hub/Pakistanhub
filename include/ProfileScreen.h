@@ -19,8 +19,13 @@ private:
     User* currentUser;
     User* targetUser;
 
-    // UI elements
-    sf::Text backLink;
+    // Persistent Top Navigation Bar
+    sf::RectangleShape headerBackground;
+    sf::Text logoText;
+    sf::Text statusText;
+    std::unique_ptr<GlassButton> navHome;
+    std::unique_ptr<GlassButton> navProfile;
+    std::unique_ptr<GlassButton> navLogout;
 
     // Profile Header card
     sf::RectangleShape headerCard;
@@ -33,7 +38,12 @@ private:
     // Scrollable feed viewport
     sf::View feedViewport;
     float scrollOffset;
+    float targetScrollOffset;
     float maxScrollOffset;
+
+    // Empty state panel
+    sf::RectangleShape emptyCard;
+    sf::Text emptyText;
 
     std::vector<std::unique_ptr<PostCard>> postCards;
     std::string clickedHandle;
@@ -43,12 +53,16 @@ public:
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
+    void update() override;
 
     void setTargetUser(User* user);
     void setCurrentUser(User* user);
     void reloadProfile();
 
     bool isBackClicked(sf::Event& event, sf::RenderWindow& window);
+    bool isHomeClicked(sf::Event& event);
+    bool isProfileClicked(sf::Event& event);
+    bool isLogoutClicked(sf::Event& event);
     std::string getClickedHandle();
     void clearClickedHandle();
 };

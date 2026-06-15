@@ -16,8 +16,8 @@ RegisterScreen::RegisterScreen(sf::Font& fnt) : font(fnt) {
     // Configure card background
     cardBackground.setPosition(cardX, cardY);
     cardBackground.setSize(sf::Vector2f(cardWidth, cardHeight));
-    cardBackground.setFillColor(sf::Color(255, 255, 255, 20)); // ~8% alpha white
-    cardBackground.setOutlineColor(sf::Color(255, 255, 255, 80)); // 30% alpha border
+    cardBackground.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
+    cardBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
     cardBackground.setOutlineThickness(1.0f);
 
     float centerX = cardX + cardWidth / 2.0f;
@@ -147,6 +147,7 @@ bool RegisterScreen::isRegisterClicked(sf::Event& event, sf::RenderWindow& windo
 }
 
 bool RegisterScreen::isBackLinkClicked(sf::Event& event, sf::RenderWindow& window) {
+    (void)window;
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
         return backLink.getGlobalBounds().contains(mousePos);

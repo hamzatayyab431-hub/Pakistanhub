@@ -13,6 +13,7 @@ private:
     std::string placeholder;
     bool isFocused;
     bool isPassword;
+    bool isHovered;
 
     // UI Shapes
     sf::RectangleShape backgroundRect;
