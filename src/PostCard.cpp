@@ -167,6 +167,14 @@ bool PostCard::isLikeClicked(sf::Event& event) {
     return false;
 }
 
+bool PostCard::isHandleClicked(sf::Event& event) {
+    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+        sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
+        return authorText.getGlobalBounds().contains(mousePos) || handleText.getGlobalBounds().contains(mousePos);
+    }
+    return false;
+}
+
 int PostCard::getPostId() const {
     return post.getPostId();
 }

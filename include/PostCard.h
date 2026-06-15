@@ -31,6 +31,8 @@ public:
     void handleEvent(sf::Event& event) override;
 
     bool isLikeClicked(sf::Event& event);
+    bool isHandleClicked(sf::Event& event);
+    std::string getAuthorUsername() const { return post.getAuthorUsername(); }
     int getPostId() const;
     bool getIsLiked() const { return isLiked; }
     void setPosition(const sf::Vector2f& pos);

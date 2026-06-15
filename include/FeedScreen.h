@@ -7,6 +7,7 @@
 #include "PostCard.h"
 #include "PostManager.h"
 #include "UserManager.h"
+#include "SocialGraph.h"
 #include <memory>
 #include <vector>
 
@@ -15,6 +16,7 @@ private:
     sf::Font& font;
     UserManager& userManager;
     PostManager& postManager;
+    SocialGraph& socialGraph;
     User* currentUser;
 
     // Header shapes
@@ -28,23 +30,32 @@ private:
     std::unique_ptr<TextInput> composeInput;
     std::unique_ptr<GlassButton> postButton;
 
+    // Tabs UI
+    int activeTab; // 0 = For You, 1 = Following
+    sf::Text forYouText;
+    sf::Text followingText;
+    sf::RectangleShape tabIndicator;
+
     // Scrollable feed viewport
     sf::View feedViewport;
     float scrollOffset;
     float maxScrollOffset;
 
     std::vector<std::unique_ptr<PostCard>> postCards;
+    std::string clickedHandle;
 
     void updateCardPositions();
 
 public:
-    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm);
+    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
 
     void reloadFeed();
     void setCurrentUser(User* user);
+    std::string getClickedHandle();
+    void clearClickedHandle();
 
     bool isLogoutClicked(sf::Event& event, sf::RenderWindow& window);
 };

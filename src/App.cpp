@@ -10,18 +10,22 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
         std::cerr << "Error: Failed to load font assets/fonts/Roboto-Regular.ttf!\n";
     }
 
-    // Load persisted users and posts
+    // Load persisted users, posts, and follows
     if (!userManager.loadFromFile("data/users.txt")) {
         std::cerr << "Warning: Could not open data/users.txt, starting with empty database.\n";
     }
     if (!postManager.loadFromFile("data/posts.txt")) {
         std::cerr << "Warning: Could not open data/posts.txt, starting with empty database.\n";
     }
+    if (!socialGraph.loadFromFile("data/follows.txt")) {
+        std::cerr << "Warning: Could not open data/follows.txt, starting with empty graph.\n";
+    }
 
     // Initialize screen objects
     loginScreen = std::make_unique<LoginScreen>(font);
     registerScreen = std::make_unique<RegisterScreen>(font);
-    feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager);
+    feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager, socialGraph);
+    profileScreen = std::make_unique<ProfileScreen>(font, userManager, postManager, socialGraph);
 }
 
 void App::run() {
@@ -113,12 +117,45 @@ void App::processEvents() {
                 currentUser = nullptr;
                 currentState = AppState::LOGIN;
             }
+            // Check if user clicked a handle to view their profile
+            else {
+                std::string clicked = feedScreen->getClickedHandle();
+                if (!clicked.empty()) {
+                    feedScreen->clearClickedHandle();
+                    User* target = userManager.findUser(clicked);
+                    if (target != nullptr) {
+                        profileScreen->setCurrentUser(currentUser);
+                        profileScreen->setTargetUser(target);
+                        currentState = AppState::PROFILE;
+                    }
+                }
+            }
+        }
+        else if (currentState == AppState::PROFILE) {
+            profileScreen->handleEvent(event);
+
+            // Check if Back to Feed is clicked
+            if (profileScreen->isBackClicked(event, window)) {
+                feedScreen->reloadFeed(); // reload feed to show any new follow updates
+                currentState = AppState::FEED;
+            }
+            // Check if another username was clicked on ProfileScreen (hops profile)
+            else {
+                std::string clicked = profileScreen->getClickedHandle();
+                if (!clicked.empty()) {
+                    profileScreen->clearClickedHandle();
+                    User* target = userManager.findUser(clicked);
+                    if (target != nullptr) {
+                        profileScreen->setTargetUser(target);
+                    }
+                }
+            }
         }
     }
 }
 
 void App::update() {
-    // AppState::FEED updates are handled inside FeedScreen
+    // UI components handle their own updates during drawing
 }
 
 void App::render() {
@@ -132,6 +169,8 @@ void App::render() {
         registerScreen->draw(window);
     } else if (currentState == AppState::FEED) {
         feedScreen->draw(window);
+    } else if (currentState == AppState::PROFILE) {
+        profileScreen->draw(window);
     }
 
     window.display();
