@@ -11,6 +11,7 @@ private:
     sf::Font& font;
     std::string labelString;
     bool isHovered;
+    bool isEnabled;
 
     sf::RectangleShape backgroundRect;
     sf::RectangleShape shadowRect; // Green glow on hover/active
@@ -24,6 +25,8 @@ public:
 
     bool isClicked(sf::Event& event);
     void setPosition(const sf::Vector2f& pos);
+    void setEnabled(bool enabled);
+    bool getEnabled() const;
 };
 
 #endif // GLASSBUTTON_H

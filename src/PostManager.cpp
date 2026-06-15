@@ -18,10 +18,14 @@ bool PostManager::loadFromFile(const std::string& path) {
     std::string line;
     while (std::getline(file, line)) {
         if (line.empty()) continue;
-        Post post = Post::deserialize(line);
-        posts.push_back(post);
-        if (post.getPostId() >= nextPostId) {
-            nextPostId = post.getPostId() + 1;
+        try {
+            Post post = Post::deserialize(line);
+            posts.push_back(post);
+            if (post.getPostId() >= nextPostId) {
+                nextPostId = post.getPostId() + 1;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Skipping malformed post line: " << line << " (" << e.what() << ")\n";
         }
     }
     file.close();

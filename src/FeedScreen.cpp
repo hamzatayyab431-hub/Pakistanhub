@@ -299,6 +299,18 @@ void FeedScreen::clearClickedPostId() {
 }
 
 void FeedScreen::update() {
+    if (composeInput && postButton) {
+        bool hasContent = false;
+        std::string text = composeInput->getText();
+        for (char c : text) {
+            if (!std::isspace(static_cast<unsigned char>(c))) {
+                hasContent = true;
+                break;
+            }
+        }
+        postButton->setEnabled(hasContent);
+    }
+
     float lerpFactor = 0.15f;
     if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
         scrollOffset += (targetScrollOffset - scrollOffset) * lerpFactor;

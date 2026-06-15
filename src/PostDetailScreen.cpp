@@ -188,6 +188,18 @@ void PostDetailScreen::handleEvent(sf::Event& event) {
 }
 
 void PostDetailScreen::update() {
+    if (replyInput && replyButton) {
+        bool hasContent = false;
+        std::string text = replyInput->getText();
+        for (char c : text) {
+            if (!std::isspace(static_cast<unsigned char>(c))) {
+                hasContent = true;
+                break;
+            }
+        }
+        replyButton->setEnabled(hasContent);
+    }
+
     float lerpFactor = 0.15f;
     if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
         scrollOffset += (targetScrollOffset - scrollOffset) * lerpFactor;

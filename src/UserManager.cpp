@@ -1,6 +1,8 @@
 #include "UserManager.h"
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+#include <cctype>
 
 UserManager::UserManager() {}
 
@@ -14,7 +16,11 @@ bool UserManager::loadFromFile(const std::string& path) {
     std::string line;
     while (std::getline(file, line)) {
         if (line.empty()) continue;
-        users.push_back(User::deserialize(line));
+        try {
+            users.push_back(User::deserialize(line));
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Skipping malformed user line: " << line << " (" << e.what() << ")\n";
+        }
     }
     file.close();
     return true;
@@ -37,9 +43,13 @@ bool UserManager::registerUser(const std::string& username, const std::string& p
         return false;
     }
 
-    // Check if username already exists
+    // Check if username already exists (case-insensitive check)
     for (const auto& user : users) {
-        if (user.getUsername() == username) {
+        std::string existingUser = user.getUsername();
+        std::string registerUser = username;
+        std::transform(existingUser.begin(), existingUser.end(), existingUser.begin(), ::tolower);
+        std::transform(registerUser.begin(), registerUser.end(), registerUser.begin(), ::tolower);
+        if (existingUser == registerUser) {
             return false; // Username taken
         }
     }

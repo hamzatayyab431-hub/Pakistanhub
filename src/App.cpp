@@ -1,5 +1,6 @@
 #include "App.h"
 #include <iostream>
+#include <cstdlib>
 
 App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar | sf::Style::Close),
              currentState(AppState::LOGIN), currentUser(nullptr) {
@@ -8,6 +9,7 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
     // Load typography font from assets
     if (!font.loadFromFile("assets/fonts/Roboto-Regular.ttf")) {
         std::cerr << "Error: Failed to load font assets/fonts/Roboto-Regular.ttf!\n";
+        std::exit(1);
     }
 
     // Load persisted users, posts, follows, and comments

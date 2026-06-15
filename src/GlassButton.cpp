@@ -1,7 +1,7 @@
 #include "GlassButton.h"
 
 GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& labelStr)
-    : position(pos), size(sz), font(fnt), labelString(labelStr), isHovered(false) {
+    : position(pos), size(sz), font(fnt), labelString(labelStr), isHovered(false), isEnabled(true) {
 
     // Configure background rectangle
     backgroundRect.setPosition(position);
@@ -30,6 +30,15 @@ GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Fo
 }
 
 void GlassButton::draw(sf::RenderWindow& window) {
+    if (!isEnabled) {
+        backgroundRect.setFillColor(sf::Color(100, 100, 100, 20)); // Greyed-out fill
+        backgroundRect.setOutlineColor(sf::Color(100, 100, 100, 40)); // Greyed-out border
+        labelText.setFillColor(sf::Color(150, 150, 150, 100)); // Greyed-out label
+        window.draw(backgroundRect);
+        window.draw(labelText);
+        return;
+    }
+
     if (isHovered) {
         backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
         backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 200)); // Active green border
@@ -39,11 +48,16 @@ void GlassButton::draw(sf::RenderWindow& window) {
         backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // Alpha 60 white border
     }
 
+    labelText.setFillColor(sf::Color::White); // Ensure white when enabled
     window.draw(backgroundRect);
     window.draw(labelText);
 }
 
 void GlassButton::handleEvent(sf::Event& event) {
+    if (!isEnabled) {
+        isHovered = false;
+        return;
+    }
     if (event.type == sf::Event::MouseMoved) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
         isHovered = backgroundRect.getGlobalBounds().contains(mousePos);
@@ -51,6 +65,7 @@ void GlassButton::handleEvent(sf::Event& event) {
 }
 
 bool GlassButton::isClicked(sf::Event& event) {
+    if (!isEnabled) return false;
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
         return backgroundRect.getGlobalBounds().contains(mousePos);
@@ -64,4 +79,12 @@ void GlassButton::setPosition(const sf::Vector2f& pos) {
     shadowRect.setPosition(position - sf::Vector2f(2, 2));
 
     labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+}
+
+void GlassButton::setEnabled(bool enabled) {
+    isEnabled = enabled;
+}
+
+bool GlassButton::getEnabled() const {
+    return isEnabled;
 }

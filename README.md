@@ -36,13 +36,13 @@ PakistanHub is a local social media clone where users can register, post, follow
 
 | Phase | Description | Status |
 |---|---|---|
-| Phase 1 | Project setup, folder structure, base classes, Makefile | 🔲 |
-| Phase 2 | User system — register, login, profiles, file persistence | 🔲 |
-| Phase 3 | Core feed — create posts, display feed, like posts | 🔲 |
-| Phase 4 | Social graph — follow/unfollow, follower feed filtering | 🔲 |
-| Phase 5 | UI polish — glassmorphism panels, animations, transitions | 🔲 |
-| Phase 6 | Comments, notifications, search | 🔲 |
-| Phase 7 | Final integration, edge-case handling, cleanup | 🔲 |
+| Phase 1 | Project setup, folder structure, base classes, Makefile | ✅ |
+| Phase 2 | User system — register, login, profiles, file persistence | ✅ |
+| Phase 3 | Core feed — create posts, display feed, like posts | ✅ |
+| Phase 4 | Social graph — follow/unfollow, follower feed filtering | ✅ |
+| Phase 5 | UI polish — glassmorphism panels, animations, transitions | ✅ |
+| Phase 6 | Comments, notifications, search | ✅ |
+| Phase 7 | Final integration, edge-case handling, cleanup | ✅ |
 
 ---
 

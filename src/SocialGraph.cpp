@@ -1,6 +1,7 @@
 #include "SocialGraph.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 SocialGraph::SocialGraph() {}
 
@@ -16,13 +17,17 @@ bool SocialGraph::loadFromFile(const std::string& path) {
     std::string line;
     while (std::getline(file, line)) {
         if (line.empty()) continue;
-        std::stringstream ss(line);
-        std::string follower, following;
-        std::getline(ss, follower, '|');
-        std::getline(ss, following, '|');
+        try {
+            std::stringstream ss(line);
+            std::string follower, following;
+            std::getline(ss, follower, '|');
+            std::getline(ss, following, '|');
 
-        if (!follower.empty() && !following.empty()) {
-            follows[follower].insert(following);
+            if (!follower.empty() && !following.empty()) {
+                follows[follower].insert(following);
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Skipping malformed follow line: " << line << " (" << e.what() << ")\n";
         }
     }
     file.close();
