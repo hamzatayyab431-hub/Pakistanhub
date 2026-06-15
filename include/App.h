@@ -12,6 +12,8 @@
 #include "ProfileScreen.h"
 #include "PostDetailScreen.h"
 #include "SearchScreen.h"
+#include "ToastManager.h"
+#include "Animator.h"
 #include <memory>
 
 class App {
@@ -23,33 +25,35 @@ private:
     AppState currentState;
 
     sf::Font font;
-    UserManager userManager;
-    PostManager postManager;
-    SocialGraph socialGraph;
+    UserManager    userManager;
+    PostManager    postManager;
+    SocialGraph    socialGraph;
     CommentManager commentManager;
     User* currentUser;
 
-    std::unique_ptr<LoginScreen> loginScreen;
-    std::unique_ptr<RegisterScreen> registerScreen;
-    std::unique_ptr<FeedScreen> feedScreen;
-    std::unique_ptr<ProfileScreen> profileScreen;
+    std::unique_ptr<LoginScreen>      loginScreen;
+    std::unique_ptr<RegisterScreen>   registerScreen;
+    std::unique_ptr<FeedScreen>       feedScreen;
+    std::unique_ptr<ProfileScreen>    profileScreen;
     std::unique_ptr<PostDetailScreen> postDetailScreen;
-    std::unique_ptr<SearchScreen> searchScreen;
+    std::unique_ptr<SearchScreen>     searchScreen;
 
-    // Global transition and background elements
+    // Background
     sf::VertexArray backgroundGradient;
     sf::CircleShape glowTopLeft;
     sf::CircleShape glowBottomRight;
     sf::CircleShape glowCenter;
-    sf::Clock appClock;
+    sf::Clock       appClock;
+    sf::Clock       frameClock;
 
+    // Screen transitions
     AppState nextState;
-    bool isTransitioning;
-    float transitionAlpha;
+    bool     isTransitioning;
+    float    transitionAlpha;
     sf::RectangleShape transitionOverlay;
 
     void processEvents();
-    void update();
+    void update(float dt);
     void render();
     void drawBackground();
     void transitionTo(AppState state);

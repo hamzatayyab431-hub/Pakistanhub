@@ -9,69 +9,71 @@
 #include "UserManager.h"
 #include "SocialGraph.h"
 #include "CommentManager.h"
+#include "NavBar.h"
+#include "Animator.h"
 #include <memory>
 #include <vector>
 
 class FeedScreen : public UIComponent {
 private:
-    sf::Font& font;
-    UserManager& userManager;
-    PostManager& postManager;
+    sf::Font&       font;
+    UserManager&    userManager;
+    PostManager&    postManager;
     CommentManager& commentManager;
-    SocialGraph& socialGraph;
-    User* currentUser;
+    SocialGraph&    socialGraph;
+    User*           currentUser;
 
-    // Header shapes
-    sf::RectangleShape headerBackground;
-    sf::Text logoText;
-    sf::Text statusText;
-    std::unique_ptr<GlassButton> navHome;
-    std::unique_ptr<GlassButton> navSearch;
-    std::unique_ptr<GlassButton> navProfile;
-    std::unique_ptr<GlassButton> navLogout;
-    sf::RectangleShape navAccentLine;
+    NavBar nav;
 
-    // Compose panel
+    // Compose
     sf::RectangleShape composePanel;
-    std::unique_ptr<TextInput> composeInput;
+    std::unique_ptr<TextInput>   composeInput;
     std::unique_ptr<GlassButton> postButton;
+    sf::Text                     charCountText;
+    float                        composeHeight = 90.f;
+    Lerp                         composeHeightLerp;
 
-    // Tabs UI
-    int activeTab; // 0 = For You, 1 = Following, 2 = Friends
-    sf::Text forYouText;
-    sf::Text followingText;
-    sf::Text friendsText;
+    // Tabs
+    int            activeTab = 0;
+    sf::Text       tabText[3];
     sf::RectangleShape tabIndicator;
+    Lerp           tabIndX;
 
-    // Scrollable feed viewport
-    sf::View feedViewport;
-    float scrollOffset;
-    float targetScrollOffset;
-    float maxScrollOffset;
+    // Scrollable feed
+    sf::View       feedViewport;
+    float          scrollOffset;
+    float          targetScrollOffset;
+    float          maxScrollOffset;
 
-    // Empty state panel
-    sf::RectangleShape emptyCard;
+    sf::RectangleShape scrollTrack;
+    sf::RectangleShape scrollThumb;
+
+    // Empty state
     sf::Text emptyText;
+    sf::Text emptySubText;
 
     std::vector<std::unique_ptr<PostCard>> postCards;
     std::string clickedHandle;
-    int clickedPostId;
+    int         clickedPostId;
 
     void updateCardPositions();
+    void updateScrollbar();
 
 public:
-    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg);
+    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
+               CommentManager& cm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
-    void update() override;
+    void update() override { update(0.016f); }
+    void update(float dt);
 
     void reloadFeed();
     void setCurrentUser(User* user);
     std::string getClickedHandle();
-    void clearClickedHandle();
-    int getClickedPostId();
-    void clearClickedPostId();
+    void        clearClickedHandle();
+    int         getClickedPostId();
+    void        clearClickedPostId();
 
     bool isHomeClicked(sf::Event& event);
     bool isSearchClicked(sf::Event& event);

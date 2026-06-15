@@ -1,386 +1,340 @@
 #include "FeedScreen.h"
-#include "GlassPanel.h"
+#include "DrawUtils.h"
 #include "Theme.h"
+#include "ToastManager.h"
 #include <algorithm>
 #include <iostream>
 
-FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg)
-    : font(fnt), userManager(um), postManager(pm), commentManager(cm), socialGraph(sg), currentUser(nullptr),
-      activeTab(0), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle(""), clickedPostId(-1) {
+FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
+                       CommentManager& cm, SocialGraph& sg)
+    : font(fnt), userManager(um), postManager(pm),
+      commentManager(cm), socialGraph(sg), currentUser(nullptr),
+      activeTab(0), scrollOffset(0.f), targetScrollOffset(0.f),
+      maxScrollOffset(0.f), clickedHandle(""), clickedPostId(-1)
+{
+    nav.init(font, NavActive::HOME, "");
 
-    // Configure header top bar
-    headerBackground.setPosition(0.0f, 0.0f);
-    headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
+    // Compose panel
+    composePanel.setPosition(100.f, 68.f);
+    composePanel.setSize(sf::Vector2f(1080.f, 90.f));
 
-    // App logo
-    logoText.setFont(font);
-    logoText.setCharacterSize(24);
-    logoText.setStyle(sf::Text::Bold);
-    logoText.setFillColor(Theme::GREEN_PRIMARY);
-    logoText.setString("PakistanHub");
-    logoText.setPosition(40.0f, 15.0f);
-
-    // Status text
-    statusText.setFont(font);
-    statusText.setCharacterSize(13);
-    statusText.setFillColor(Theme::TEXT_MUTED);
-    statusText.setPosition(200.0f, 22.0f);
-
-    // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home", GlassButton::Type::NAV_ACTIVE);
-    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search", GlassButton::Type::NAV_DEFAULT);
-    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile", GlassButton::Type::NAV_DEFAULT);
-    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout", GlassButton::Type::NAV_DEFAULT);
-
-    // Nav accent line
-    navAccentLine.setPosition(0.0f, 60.0f);
-    navAccentLine.setSize(sf::Vector2f(1280.0f, 1.0f));
-    navAccentLine.setFillColor(Theme::GLASS_BORDER);
-
-    // Compose panel background
-    composePanel.setPosition(100.0f, 80.0f);
-    composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
-
-    // Setup empty state elements
-    emptyCard.setSize(sf::Vector2f(600.0f, 80.0f));
-    emptyCard.setPosition(240.0f, 150.0f);
-    emptyCard.setFillColor(sf::Color(255, 255, 255, 30));
-    emptyCard.setOutlineColor(sf::Color(255, 255, 255, 60));
-    emptyCard.setOutlineThickness(1.0f);
-
-    emptyText.setFont(font);
-    emptyText.setCharacterSize(15);
-    emptyText.setFillColor(sf::Color(255, 255, 255, 200));
-    emptyText.setString("No posts yet. Be the first to post!");
-    sf::FloatRect etBounds = emptyText.getLocalBounds();
-    emptyText.setOrigin(etBounds.left + etBounds.width / 2.0f, etBounds.top + etBounds.height / 2.0f);
-    emptyText.setPosition(540.0f, 190.0f); // Center relative to viewport coordinates (540, 190)
-
-    // Compose input field
     composeInput = std::make_unique<TextInput>(
-        sf::Vector2f(120.0f, 95.0f),
-        sf::Vector2f(800.0f, 80.0f),
-        font, "What's on your mind?..."
-    );
+        sf::Vector2f(155.f, 80.f), sf::Vector2f(750.f, 52.f),
+        font, "What's on your mind?...", false, 280);
 
-    // Compose Post button
     postButton = std::make_unique<GlassButton>(
-        sf::Vector2f(940.0f, 95.0f),
-        sf::Vector2f(220.0f, 80.0f),
-        font, "POST"
-    );
+        sf::Vector2f(916.f, 80.f), sf::Vector2f(88.f, 34.f),
+        font, "Post");
 
-    // Tabs UI Setup
-    forYouText.setFont(font);
-    forYouText.setCharacterSize(16);
-    forYouText.setStyle(sf::Text::Bold);
-    forYouText.setString("For You");
-    forYouText.setPosition(120.0f, 205.0f);
-    forYouText.setFillColor(Theme::TEXT_PRIMARY);
+    charCountText.setFont(font);
+    charCountText.setCharacterSize(12);
+    charCountText.setFillColor(Theme::TEXT_DIM);
+    charCountText.setPosition(916.f, 122.f);
 
-    followingText.setFont(font);
-    followingText.setCharacterSize(16);
-    followingText.setStyle(sf::Text::Bold);
-    followingText.setString("Following");
-    followingText.setPosition(220.0f, 205.0f);
-    followingText.setFillColor(Theme::TEXT_MUTED);
+    // Tabs
+    const char* tabLabels[3] = {"For You", "Following", "Friends"};
+    float tabX = 110.f;
+    for (int i = 0; i < 3; ++i) {
+        tabText[i].setFont(font);
+        tabText[i].setCharacterSize(15);
+        tabText[i].setStyle(sf::Text::Bold);
+        tabText[i].setString(tabLabels[i]);
+        tabText[i].setPosition(tabX, 172.f);
+        tabX += tabText[i].getGlobalBounds().width + 28.f;
+    }
 
-    friendsText.setFont(font);
-    friendsText.setCharacterSize(16);
-    friendsText.setStyle(sf::Text::Bold);
-    friendsText.setString("Friends");
-    friendsText.setPosition(340.0f, 205.0f);
-    friendsText.setFillColor(Theme::TEXT_MUTED);
+    tabIndicator.setSize(sf::Vector2f(60.f, 3.f));
+    tabIndicator.setFillColor(Theme::GREEN);
+    tabIndicator.setPosition(110.f, 194.f);
 
-    tabIndicator.setSize(sf::Vector2f(70.0f, 3.0f));
-    tabIndicator.setFillColor(Theme::GREEN_PRIMARY);
-    tabIndicator.setPosition(120.0f, 230.0f);
+    tabIndX.speed = 10.f;
+    tabIndX.snap(110.f);
 
-    // Setup scrollable view (clips inside y = 240 to y = 710)
-    feedViewport.setSize(1080.0f, 460.0f);
-    feedViewport.setViewport(sf::FloatRect(100.0f / 1280.0f, 240.0f / 720.0f, 1080.0f / 1280.0f, 460.0f / 720.0f));
-    feedViewport.setCenter(540.0f, 230.0f);
+    // Scrollbar
+    scrollTrack.setSize(sf::Vector2f(4.f, 460.f));
+    scrollTrack.setPosition(1278.f, 205.f);
+    scrollTrack.setFillColor(Theme::GLASS_BORDER);
+
+    scrollThumb.setSize(sf::Vector2f(4.f, 60.f));
+    scrollThumb.setPosition(1278.f, 205.f);
+    scrollThumb.setFillColor(Theme::GREEN_DIM);
+
+    // Empty state
+    emptyText.setFont(font);
+    emptyText.setCharacterSize(18);
+    emptyText.setStyle(sf::Text::Bold);
+    emptyText.setFillColor(Theme::TEXT_MUTED);
+    emptyText.setString("Nothing here yet");
+    sf::FloatRect eb = emptyText.getLocalBounds();
+    emptyText.setOrigin(eb.left + eb.width / 2.f, 0.f);
+    emptyText.setPosition(540.f, 80.f);
+
+    emptySubText.setFont(font);
+    emptySubText.setCharacterSize(14);
+    emptySubText.setFillColor(Theme::TEXT_DIM);
+    emptySubText.setString("Be the first to post!");
+    sf::FloatRect esb = emptySubText.getLocalBounds();
+    emptySubText.setOrigin(esb.left + esb.width / 2.f, 0.f);
+    emptySubText.setPosition(540.f, 108.f);
+
+    // Viewport: x[100,1180], y[205,665]
+    feedViewport.setSize(1080.f, 460.f);
+    feedViewport.setViewport(sf::FloatRect(100.f / 1280.f, 205.f / 720.f,
+                                           1080.f / 1280.f, 460.f / 720.f));
+    feedViewport.setCenter(540.f, 230.f);
 }
 
 void FeedScreen::setCurrentUser(User* user) {
     currentUser = user;
-    if (currentUser != nullptr) {
-        statusText.setString("Logged in as @" + currentUser->getUsername());
-    }
+    if (currentUser) nav.setUsername(currentUser->getUsername());
 }
 
 void FeedScreen::reloadFeed() {
     postCards.clear();
-    scrollOffset = 0.0f;
-    targetScrollOffset = 0.0f;
+    scrollOffset = 0.f;
+    targetScrollOffset = 0.f;
     clickedPostId = -1;
-    feedViewport.setCenter(540.0f, 230.0f);
+    feedViewport.setCenter(540.f, 230.f);
 
-    // Load sorted posts
-    std::vector<Post> sortedPosts = postManager.getAllPostsSorted();
-    
-    // Position tab indicator underline (width logic, color is handled in update())
-    if (activeTab == 0) {
-        tabIndicator.setSize(sf::Vector2f(forYouText.getGlobalBounds().width, 3.0f));
-    } else if (activeTab == 1) {
-        tabIndicator.setSize(sf::Vector2f(followingText.getGlobalBounds().width, 3.0f));
-    } else {
-        tabIndicator.setSize(sf::Vector2f(friendsText.getGlobalBounds().width, 3.0f));
-    }
-
-    float y = 10.0f;
-    for (const auto& post : sortedPosts) {
-        // Filter Following tab: only posts by followed users (or self)
-        if (activeTab == 1 && currentUser != nullptr) {
-            std::string author = post.getAuthorUsername();
-            if (author != currentUser->getUsername() && !socialGraph.isFollowing(currentUser->getUsername(), author)) {
-                continue;
-            }
+    std::vector<Post> posts = postManager.getAllPostsSorted();
+    float y = 10.f;
+    for (const auto& post : posts) {
+        if (activeTab == 1 && currentUser) {
+            std::string a = post.getAuthorUsername();
+            if (a != currentUser->getUsername() &&
+                !socialGraph.isFollowing(currentUser->getUsername(), a)) continue;
         }
-        // Filter Friends tab: only posts by mutual friends (or self)
-        if (activeTab == 2 && currentUser != nullptr) {
-            std::string author = post.getAuthorUsername();
-            if (author != currentUser->getUsername() && !socialGraph.isFriend(currentUser->getUsername(), author)) {
-                continue;
-            }
+        if (activeTab == 2 && currentUser) {
+            std::string a = post.getAuthorUsername();
+            if (a != currentUser->getUsername() &&
+                !socialGraph.isFriend(currentUser->getUsername(), a)) continue;
         }
-
-        // Check if the current user liked this post
-        // Since we don't store liked-by-user mapping in Phase 3/4 yet, we can check if likeCount > 0 as a visual fallback or pass false.
-        // Let's pass true/false. We can determine if liked by session user:
-        // We'll set liked state depending on local toggleLike calls, but we can default liked status to false initially.
-        bool liked = false; 
-        int commentCount = commentManager.getCommentCountForPost(post.getPostId());
-
-        auto card = std::make_unique<PostCard>(post, font, sf::Vector2f(0.0f, y), sf::Vector2f(1080.0f, 120.0f), liked, commentCount);
-        y += card->getHeight() + 15.0f;
+        int cc = commentManager.getCommentCountForPost(post.getPostId());
+        auto card = std::make_unique<PostCard>(
+            post, font, sf::Vector2f(0.f, y), sf::Vector2f(1080.f, 120.f), false, cc);
+        y += card->getHeight() + 12.f;
         postCards.push_back(std::move(card));
     }
+    maxScrollOffset = std::max(0.f, y - 460.f);
+    updateScrollbar();
+}
 
-    maxScrollOffset = std::max(0.0f, y - 460.0f);
+void FeedScreen::updateCardPositions() {
+    float y = 10.f;
+    for (auto& card : postCards) {
+        card->setPosition(sf::Vector2f(0.f, y));
+        y += card->getHeight() + 12.f;
+    }
+}
+
+void FeedScreen::updateScrollbar() {
+    float total = maxScrollOffset + 460.f;
+    if (total <= 0.f) total = 460.f;
+    float ratio = 460.f / total;
+    float thumbH = std::max(30.f, 460.f * ratio);
+    scrollThumb.setSize(sf::Vector2f(4.f, thumbH));
+
+    float scrollRatio = maxScrollOffset > 0.f ? scrollOffset / maxScrollOffset : 0.f;
+    float thumbY = 205.f + scrollRatio * (460.f - thumbH);
+    scrollThumb.setPosition(1278.f, thumbY);
 }
 
 void FeedScreen::draw(sf::RenderWindow& window) {
-    // 1. Draw static Header
-    GlassPanel::draw(window, headerBackground.getGlobalBounds(), false, 1.0f);
-    window.draw(logoText);
-    window.draw(statusText);
-    navHome->draw(window);
-    navSearch->draw(window);
-    navProfile->draw(window);
-    navLogout->draw(window);
-    window.draw(navAccentLine);
+    // Nav bar
+    nav.draw(window);
 
-    // 2. Draw Compose area
-    GlassPanel::draw(window, composePanel.getGlobalBounds(), false, 1.0f);
+    // Compose panel
+    DrawUtils::drawGlassPanel(window,
+        sf::FloatRect(100.f, 68.f, 1080.f, composeHeight), 6.f, Theme::GLASS_1);
+
+    // Avatar in compose (left side)
+    if (currentUser && !currentUser->getDisplayName().empty()) {
+        DrawUtils::drawAvatar(window, sf::Vector2f(128.f, 68.f + composeHeight / 2.f),
+            19.f, currentUser->getDisplayName()[0], font, 15);
+    }
+
     composeInput->draw(window);
     postButton->draw(window);
+    window.draw(charCountText);
 
-    // 3. Draw Tabs UI
-    window.draw(forYouText);
-    window.draw(followingText);
-    window.draw(friendsText);
+    // Tabs
+    for (int i = 0; i < 3; ++i) {
+        int col = (activeTab == i) ? 0 : 1;
+        tabText[i].setFillColor(col == 0 ? Theme::TEXT_WHITE : Theme::TEXT_MUTED);
+        window.draw(tabText[i]);
+    }
+    // Tab indicator
+    tabIndicator.setPosition(tabIndX.current, 194.f);
     window.draw(tabIndicator);
 
-    // 4. Draw scrollable feed area with clipping view
-    sf::View originalView = window.getView();
+    // Feed scroll area
+    sf::View orig = window.getView();
     window.setView(feedViewport);
     if (postCards.empty()) {
-        window.draw(emptyCard);
+        // Empty state: speech bubble icon (simplified)
+        sf::RectangleShape bubble(sf::Vector2f(64.f, 48.f));
+        bubble.setOrigin(32.f, 24.f);
+        bubble.setPosition(540.f, 46.f);
+        bubble.setFillColor(sf::Color::Transparent);
+        bubble.setOutlineColor(Theme::TEXT_DIM);
+        bubble.setOutlineThickness(2.f);
+        window.draw(bubble);
+        // Nub
+        sf::RectangleShape nub(sf::Vector2f(10.f, 8.f));
+        nub.setPosition(508.f, 68.f);
+        nub.setFillColor(sf::Color::Transparent);
+        nub.setOutlineColor(Theme::TEXT_DIM);
+        nub.setOutlineThickness(2.f);
+        window.draw(nub);
+
         window.draw(emptyText);
+        window.draw(emptySubText);
     } else {
-        for (const auto& card : postCards) {
-            card->draw(window);
-        }
+        for (const auto& card : postCards) card->draw(window);
     }
-    window.setView(originalView);
+    window.setView(orig);
+
+    // Scrollbar
+    if (maxScrollOffset > 0.f) {
+        window.draw(scrollTrack);
+        window.draw(scrollThumb);
+    }
 }
 
 void FeedScreen::handleEvent(sf::Event& event) {
-    // Pass events to compose input, button and nav buttons
+    nav.handleEvent(event);
     composeInput->handleEvent(event);
     postButton->handleEvent(event);
-    navHome->handleEvent(event);
-    navSearch->handleEvent(event);
-    navProfile->handleEvent(event);
-    navLogout->handleEvent(event);
 
-    // Handle mouse move highlights
-    if (event.type == sf::Event::MouseMoved) {
-        sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
-        
-        // Tabs hover
-        if (forYouText.getGlobalBounds().contains(mousePos) && activeTab != 0) {
-            forYouText.setFillColor(Theme::TEXT_PRIMARY);
-        } else if (activeTab != 0) {
-            forYouText.setFillColor(Theme::TEXT_MUTED);
-        }
+    // Char count update (handled in update())
 
-        if (followingText.getGlobalBounds().contains(mousePos) && activeTab != 1) {
-            followingText.setFillColor(Theme::TEXT_PRIMARY);
-        } else if (activeTab != 1) {
-            followingText.setFillColor(Theme::TEXT_MUTED);
-        }
-
-        if (friendsText.getGlobalBounds().contains(mousePos) && activeTab != 2) {
-            friendsText.setFillColor(Theme::TEXT_PRIMARY);
-        } else if (activeTab != 2) {
-            friendsText.setFillColor(Theme::TEXT_MUTED);
+    // Tab clicks
+    if (event.type == sf::Event::MouseButtonPressed &&
+        event.mouseButton.button == sf::Mouse::Left) {
+        sf::Vector2f mp(static_cast<float>(event.mouseButton.x),
+                        static_cast<float>(event.mouseButton.y));
+        for (int i = 0; i < 3; ++i) {
+            if (tabText[i].getGlobalBounds().contains(mp) && activeTab != i) {
+                activeTab = i;
+                reloadFeed();
+                return;
+            }
         }
     }
 
-    // Handle tab click switching
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
-        if (forYouText.getGlobalBounds().contains(mousePos) && activeTab != 0) {
-            activeTab = 0;
-            reloadFeed();
-            return;
-        }
-        if (followingText.getGlobalBounds().contains(mousePos) && activeTab != 1) {
-            activeTab = 1;
-            reloadFeed();
-            return;
-        }
-        if (friendsText.getGlobalBounds().contains(mousePos) && activeTab != 2) {
-            activeTab = 2;
-            reloadFeed();
-            return;
-        }
-    }
-
-    // Handle posting action
-    if (currentUser != nullptr && postButton->isClicked(event)) {
+    // Post button
+    if (currentUser && postButton->isClicked(event)) {
         std::string content = composeInput->getText();
-        if (!content.empty()) {
-            postManager.createPost(currentUser->getUsername(), content);
-            composeInput->clear();
-            reloadFeed();
+        // Trim whitespace check
+        bool hasContent = false;
+        for (char c : content) {
+            if (!std::isspace(static_cast<unsigned char>(c))) { hasContent = true; break; }
         }
+        if (!hasContent) return;
+        if (content.length() > 280) {
+            ToastManager::instance().push("Too long", "Max 280 characters", ToastType::WARNING);
+            return;
+        }
+        postManager.createPost(currentUser->getUsername(), content);
+        postManager.saveToFile("data/posts.txt");
+        composeInput->clear();
+        reloadFeed();
+        ToastManager::instance().push("Posted", "Your post is live", ToastType::SUCCESS);
+        return;
     }
 
-    // Scroll wheel target adjustment
-    if (event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
-        targetScrollOffset -= event.mouseWheelScroll.delta * 60.0f;
-        if (targetScrollOffset < 0.0f) targetScrollOffset = 0.0f;
+    // Scroll
+    if (event.type == sf::Event::MouseWheelScrolled &&
+        event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+        targetScrollOffset -= event.mouseWheelScroll.delta * 60.f;
+        if (targetScrollOffset < 0.f) targetScrollOffset = 0.f;
         if (targetScrollOffset > maxScrollOffset) targetScrollOffset = maxScrollOffset;
     }
 
-    // Map screen mouse coords to feedViewport coordinates for scrollable cards
-    sf::Event mappedEvent = event;
+    // Map events for scrollable cards
+    sf::Event me = event;
     bool hasMouse = false;
-    
-    // Viewport bounds: X [100, 1180], Y [240, 700]
-    if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::MouseButtonReleased) {
-        float sx = static_cast<float>(event.mouseButton.x);
-        float sy = static_cast<float>(event.mouseButton.y);
-        mappedEvent.mouseButton.x = static_cast<int>(sx - 100.0f);
-        mappedEvent.mouseButton.y = static_cast<int>((sy - 240.0f) + scrollOffset);
+    if (event.type == sf::Event::MouseButtonPressed ||
+        event.type == sf::Event::MouseButtonReleased) {
+        me.mouseButton.x = static_cast<int>(event.mouseButton.x - 100.f);
+        me.mouseButton.y = static_cast<int>((event.mouseButton.y - 205.f) + scrollOffset);
         hasMouse = true;
     } else if (event.type == sf::Event::MouseMoved) {
-        float sx = static_cast<float>(event.mouseMove.x);
-        float sy = static_cast<float>(event.mouseMove.y);
-        mappedEvent.mouseMove.x = static_cast<int>(sx - 100.0f);
-        mappedEvent.mouseMove.y = static_cast<int>((sy - 240.0f) + scrollOffset);
+        me.mouseMove.x = static_cast<int>(event.mouseMove.x - 100.f);
+        me.mouseMove.y = static_cast<int>((event.mouseMove.y - 205.f) + scrollOffset);
         hasMouse = true;
     }
 
-    // Pass mapped events to scrollable post cards
     for (auto& card : postCards) {
-        card->handleEvent(mappedEvent);
-        
-        // Handle username clicks -> routes to ProfileScreen
-        if (hasMouse && card->isHandleClicked(mappedEvent)) {
-            clickedHandle = card->getAuthorUsername();
-        }
-
-        // Handle comment clicks -> routes to PostDetailScreen
-        if (hasMouse && card->isCommentClicked(mappedEvent)) {
-            clickedPostId = card->getPostId();
-        }
-
-        // Handle like button clicks
-        if (hasMouse && card->isLikeClicked(mappedEvent)) {
+        card->handleEvent(me);
+        if (hasMouse && card->isHandleClicked(me)) clickedHandle = card->getAuthorUsername();
+        if (hasMouse && card->isCommentClicked(me)) clickedPostId = card->getPostId();
+        if (hasMouse && card->isLikeClicked(me)) {
             postManager.toggleLike(card->getPostId(), card->getIsLiked());
-        }
-    }
-}
-
-std::string FeedScreen::getClickedHandle() {
-    return clickedHandle;
-}
-
-void FeedScreen::clearClickedHandle() {
-    clickedHandle = "";
-}
-
-int FeedScreen::getClickedPostId() {
-    return clickedPostId;
-}
-
-void FeedScreen::clearClickedPostId() {
-    clickedPostId = -1;
-}
-
-void FeedScreen::update() {
-    // Compose focus expanding
-    if (composeInput && postButton) {
-        bool hasContent = false;
-        std::string text = composeInput->getText();
-        for (char c : text) {
-            if (!std::isspace(static_cast<unsigned char>(c))) {
-                hasContent = true;
-                break;
+            if (card->getIsLiked()) {
+                ToastManager::instance().push("Liked", "", ToastType::INFO);
             }
         }
-        postButton->setEnabled(hasContent);
+    }
+}
 
-        // Expand compose panel if focused
-        if (composeInput->getFocus()) {
-            composePanel.setSize(sf::Vector2f(1080.0f, 130.0f));
-        } else {
-            composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
+void FeedScreen::update(float dt) {
+    nav.update(dt);
+    composeInput->update(dt);
+    postButton->update(dt);
+
+    // Compose expand
+    bool focused = composeInput->getFocus();
+    float targetH = focused ? 110.f : 90.f;
+    composeHeightLerp.setTarget(targetH);
+    composeHeightLerp.update(dt);
+    composeHeight = composeHeightLerp.current;
+
+    // Enable/disable post button
+    {
+        std::string txt = composeInput->getText();
+        bool hasContent = false;
+        for (char c : txt) {
+            if (!std::isspace(static_cast<unsigned char>(c))) { hasContent = true; break; }
         }
+        postButton->setEnabled(hasContent && txt.length() <= 280);
     }
 
-    // Smooth tab indicator transition
-    float targetTabX = 120.0f;
-    float targetTabWidth = 70.0f;
-    if (activeTab == 0) { targetTabX = 120.0f; targetTabWidth = 60.0f; }
-    else if (activeTab == 1) { targetTabX = 220.0f; targetTabWidth = 80.0f; }
-    else if (activeTab == 2) { targetTabX = 340.0f; targetTabWidth = 60.0f; }
-    
-    sf::Vector2f currentPos = tabIndicator.getPosition();
-    sf::Vector2f currentSize = tabIndicator.getSize();
-    tabIndicator.setPosition(currentPos.x + (targetTabX - currentPos.x) * 0.2f, currentPos.y);
-    tabIndicator.setSize(sf::Vector2f(currentSize.x + (targetTabWidth - currentSize.x) * 0.2f, currentSize.y));
+    // Char counter
+    int len = static_cast<int>(composeInput->getText().length());
+    charCountText.setString(std::to_string(len) + " / 280");
+    if (len > 280) charCountText.setFillColor(Theme::ERROR);
+    else if (len > 250) charCountText.setFillColor(Theme::WARNING);
+    else charCountText.setFillColor(Theme::TEXT_DIM);
 
-    // Colors
-    forYouText.setFillColor(activeTab == 0 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
-    followingText.setFillColor(activeTab == 1 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
-    friendsText.setFillColor(activeTab == 2 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
+    // Tab indicator slide
+    float tabTargetX = tabText[activeTab].getPosition().x;
+    float tabTargetW = tabText[activeTab].getGlobalBounds().width;
+    tabIndX.setTarget(tabTargetX);
+    tabIndX.update(dt);
+    tabIndicator.setSize(sf::Vector2f(tabTargetW, 3.f));
 
-    float lerpFactor = 0.15f;
-    if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
-        scrollOffset += (targetScrollOffset - scrollOffset) * lerpFactor;
-    } else {
+    // Smooth scroll
+    float lerpF = std::min(1.f, 12.f * dt);
+    if (std::abs(targetScrollOffset - scrollOffset) > 0.05f)
+        scrollOffset += (targetScrollOffset - scrollOffset) * lerpF;
+    else
         scrollOffset = targetScrollOffset;
-    }
-    feedViewport.setCenter(540.0f, 230.0f + scrollOffset);
+    feedViewport.setCenter(540.f, 230.f + scrollOffset);
+
+    // Update scrollbar position
+    updateScrollbar();
+
+    // Update post card animations
+    for (auto& card : postCards) card->update(dt);
 }
 
-bool FeedScreen::isHomeClicked(sf::Event& event) {
-    return navHome->isClicked(event);
-}
+std::string FeedScreen::getClickedHandle()    { return clickedHandle; }
+void        FeedScreen::clearClickedHandle()  { clickedHandle = ""; }
+int         FeedScreen::getClickedPostId()    { return clickedPostId; }
+void        FeedScreen::clearClickedPostId()  { clickedPostId = -1; }
 
-bool FeedScreen::isSearchClicked(sf::Event& event) {
-    return navSearch->isClicked(event);
-}
-
-bool FeedScreen::isProfileClicked(sf::Event& event) {
-    return navProfile->isClicked(event);
-}
-
-bool FeedScreen::isLogoutClicked(sf::Event& event) {
-    return navLogout->isClicked(event);
-}
+bool FeedScreen::isHomeClicked(sf::Event& e)    { return nav.homeClicked(e); }
+bool FeedScreen::isSearchClicked(sf::Event& e)  { return nav.searchClicked(e); }
+bool FeedScreen::isProfileClicked(sf::Event& e) { return nav.profileClicked(e); }
+bool FeedScreen::isLogoutClicked(sf::Event& e)  { return nav.logoutClicked(e); }

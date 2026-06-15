@@ -7,31 +7,34 @@
 #include "UserManager.h"
 #include "PostManager.h"
 #include "SocialGraph.h"
+#include "NavBar.h"
+#include "Animator.h"
 #include <memory>
 #include <vector>
 
-// Helper card widget for displaying a user search result
 class SearchResultCard : public UIComponent {
 private:
-    User* user;
-    sf::Font& font;
+    User*        user;
+    sf::Font&    font;
     sf::Vector2f position;
     sf::Vector2f size;
-    bool isHovered;
+    bool         isHovered;
 
     sf::RectangleShape backgroundRect;
     sf::RectangleShape accentBar;
-    sf::CircleShape avatarCircle;
-    sf::Text avatarLetter;
-    sf::Text displayNameText;
-    sf::Text usernameText;
-    sf::Text statsText;
+    sf::Vector2f       avatarCenter;
+    sf::Text           displayNameText;
+    sf::Text           usernameText;
+    sf::Text           statsText;
+    Lerp               hoverFill;
 
 public:
-    SearchResultCard(User* usr, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz);
+    SearchResultCard(User* usr, sf::Font& fnt,
+                     const sf::Vector2f& pos, const sf::Vector2f& sz);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
+    void update(float dt = 0.016f);
     bool isClicked(sf::Event& event);
     std::string getUsername() const;
     float getHeight() const { return size.y; }
@@ -39,31 +42,22 @@ public:
 
 class SearchScreen : public UIComponent {
 private:
-    sf::Font& font;
+    sf::Font&    font;
     UserManager& userManager;
     PostManager& postManager;
     SocialGraph& socialGraph;
-    User* currentUser;
+    User*        currentUser;
 
-    // Persistent Top Navigation Bar
-    sf::RectangleShape headerBackground;
-    sf::Text logoText;
-    sf::Text statusText;
-    std::unique_ptr<GlassButton> navHome;
-    std::unique_ptr<GlassButton> navSearch;
-    std::unique_ptr<GlassButton> navProfile;
-    std::unique_ptr<GlassButton> navLogout;
-    sf::RectangleShape navAccentLine;
+    NavBar nav;
 
-    // Search input
     std::unique_ptr<TextInput> searchInput;
     std::string currentQuery;
+    sf::Text    noResultText;
 
-    // Scrollable results viewport
     sf::View resultsViewport;
-    float scrollOffset;
-    float targetScrollOffset;
-    float maxScrollOffset;
+    float    scrollOffset;
+    float    targetScrollOffset;
+    float    maxScrollOffset;
 
     std::vector<std::unique_ptr<SearchResultCard>> resultCards;
     std::string clickedHandle;
@@ -76,11 +70,12 @@ public:
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
     void update() override;
+    void update(float dt);
 
     void setCurrentUser(User* user);
     void reloadSearch();
     std::string getClickedHandle();
-    void clearClickedHandle();
+    void        clearClickedHandle();
 
     bool isHomeClicked(sf::Event& event);
     bool isSearchClicked(sf::Event& event);

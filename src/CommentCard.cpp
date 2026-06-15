@@ -1,104 +1,96 @@
 #include "CommentCard.h"
-#include "GlassPanel.h"
+#include "DrawUtils.h"
 #include "Theme.h"
 #include <sstream>
 #include <algorithm>
+#include <ctime>
 
-static std::string wrapText(const std::string& str, float width, const sf::Font& font, unsigned int charSize) {
-    std::string result = "";
-    sf::Text textHelper;
-    textHelper.setFont(font);
-    textHelper.setCharacterSize(charSize);
+static std::string relativeTime(time_t postTime) {
+    time_t now = time(nullptr);
+    long diff = static_cast<long>(now - postTime);
+    if (diff < 0)   diff = 0;
+    if (diff < 60)        return "Just now";
+    if (diff < 3600)      return std::to_string(diff / 60)    + "m ago";
+    if (diff < 86400)     return std::to_string(diff / 3600)  + "h ago";
+    if (diff < 604800)    return std::to_string(diff / 86400) + "d ago";
+    char buf[20];
+    strftime(buf, sizeof(buf), "%d %b", localtime(&postTime));
+    return std::string(buf);
+}
 
+static std::string wrapText(const std::string& str, float width,
+                              const sf::Font& font, unsigned int charSize) {
+    std::string result;
+    sf::Text helper;
+    helper.setFont(font);
+    helper.setCharacterSize(charSize);
     std::stringstream ss(str);
     std::string paragraph;
     while (std::getline(ss, paragraph, '\n')) {
-        std::stringstream wordStream(paragraph);
-        std::string word;
-        std::string currentLine = "";
-        std::string paragraphResult = "";
-
-        while (wordStream >> word) {
-            std::string testLine = currentLine + (currentLine.empty() ? "" : " ") + word;
-            textHelper.setString(testLine);
-            if (textHelper.getGlobalBounds().width > width) {
-                paragraphResult += (paragraphResult.empty() ? "" : "\n") + currentLine;
-                currentLine = word;
-            } else {
-                currentLine = testLine;
-            }
+        std::stringstream ws(paragraph);
+        std::string word, line, para;
+        while (ws >> word) {
+            std::string test = line + (line.empty() ? "" : " ") + word;
+            helper.setString(test);
+            if (helper.getGlobalBounds().width > width) {
+                para += (para.empty() ? "" : "\n") + line;
+                line = word;
+            } else { line = test; }
         }
-        if (!currentLine.empty()) {
-            paragraphResult += (paragraphResult.empty() ? "" : "\n") + currentLine;
-        }
-        result += (result.empty() ? "" : "\n") + paragraphResult;
+        para += (para.empty() ? "" : "\n") + line;
+        result += (result.empty() ? "" : "\n") + para;
     }
     return result;
 }
 
-CommentCard::CommentCard(const Comment& cmt, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz)
-    : comment(cmt), font(fnt), position(pos), size(sz) {
+CommentCard::CommentCard(const Comment& cmt, sf::Font& fnt,
+                         const sf::Vector2f& pos, const sf::Vector2f& sz)
+    : comment(cmt), font(fnt), position(pos), size(sz)
+{
+    std::string wrapped = wrapText(comment.getContent(), sz.x - 55.f, font, 13);
+    int lines = static_cast<int>(std::count(wrapped.begin(), wrapped.end(), '\n')) + 1;
+    size.y = 55.f + lines * 20.f;
+    if (size.y < 70.f) size.y = 70.f;
 
-    // Wrap comment text to the card's inner width
-    std::string wrapped = wrapText(comment.getContent(), size.x - 40.0f, font, 14);
-
-    // Compute dynamic height based on text line count
-    size.y = 65.0f + (std::count(wrapped.begin(), wrapped.end(), '\n') + 1) * 20.0f;
-    if (size.y < 80.0f) size.y = 80.0f;
-
-    // Set positions and sizes
-    setPosition(position);
-
-    // Initial setup of text fields
     authorText.setFont(font);
-    authorText.setCharacterSize(14);
+    authorText.setCharacterSize(13);
     authorText.setStyle(sf::Text::Bold);
-    authorText.setFillColor(Theme::GREEN_PRIMARY); // Pakistan Green for comment author
-    authorText.setString("@" + comment.getAuthorUsername());
-
-    contentText.setFont(font);
-    contentText.setCharacterSize(14);
-    contentText.setFillColor(Theme::TEXT_PRIMARY);
-    contentText.setString(wrapped);
+    authorText.setFillColor(Theme::GREEN);
 
     dateText.setFont(font);
-    dateText.setCharacterSize(11);
-    dateText.setFillColor(Theme::TEXT_MUTED);
-    dateText.setString(comment.getFormattedDate());
+    dateText.setCharacterSize(12);
+    dateText.setFillColor(Theme::TEXT_DIM);
+    dateText.setString(relativeTime(comment.getTimestamp()));
 
-    // Update positions of text elements relative to position
+    contentText.setFont(font);
+    contentText.setCharacterSize(13);
+    contentText.setFillColor(Theme::TEXT_WHITE);
+    contentText.setString(wrapped);
+
     setPosition(position);
+    authorText.setString("@" + comment.getAuthorUsername());
 }
 
 void CommentCard::setPosition(const sf::Vector2f& pos) {
     position = pos;
-
-    // Background shapes
-    backgroundRect.setPosition(position);
+    backgroundRect.setPosition(pos);
     backgroundRect.setSize(size);
 
-    // Green accent bar on left side
-    accentBar.setPosition(position.x, position.y);
-    accentBar.setSize(sf::Vector2f(3.0f, size.y));
-    accentBar.setFillColor(Theme::GREEN_PRIMARY);
+    accentBar.setPosition(pos.x, pos.y);
+    accentBar.setSize(sf::Vector2f(3.f, size.y));
+    accentBar.setFillColor(Theme::GREEN);
 
-    // Text positions (shifted right for accent bar)
-    authorText.setPosition(position.x + 28.0f, position.y + 12.0f);
-    
-    // Position date dynamically after author text to prevent overlapping
-    float authorWidth = authorText.getGlobalBounds().width;
-    dateText.setPosition(position.x + 28.0f + authorWidth + 12.0f, position.y + 14.0f);
-
-    contentText.setPosition(position.x + 28.0f, position.y + 38.0f);
+    float tx = pos.x + 20.f;
+    authorText.setPosition(tx, pos.y + 10.f);
+    float aw = authorText.getGlobalBounds().width;
+    dateText.setPosition(tx + aw + 10.f, pos.y + 12.f);
+    contentText.setPosition(tx, pos.y + 34.f);
 }
 
 void CommentCard::draw(sf::RenderWindow& window) {
-    // Simple hover state check (on mouseover, slightly transition fill alpha)
-    sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
-    sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
-    bool isHovered = backgroundRect.getGlobalBounds().contains(mousePos);
-
-    GlassPanel::draw(window, backgroundRect.getGlobalBounds(), isHovered, 1.0f);
+    DrawUtils::drawGlassPanel(window,
+        sf::FloatRect(position.x, position.y, size.x, size.y),
+        4.f, Theme::GLASS_1);
 
     window.draw(accentBar);
     window.draw(authorText);
@@ -106,10 +98,6 @@ void CommentCard::draw(sf::RenderWindow& window) {
     window.draw(contentText);
 }
 
-void CommentCard::handleEvent(sf::Event& event) {
-    (void)event;
-}
+void CommentCard::handleEvent(sf::Event&) {}
 
-float CommentCard::getHeight() const {
-    return size.y;
-}
+float CommentCard::getHeight() const { return size.y; }

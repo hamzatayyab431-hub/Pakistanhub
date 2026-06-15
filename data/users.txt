@@ -1,2 +1,2 @@
-hamza|pass|Hamza||0|1
-hamza1|pass|hamzaboss||1|0
+hamza|pass|Hamza|hhehehe|lahore|0|1
+hamza1|pass|hamzaboss|||1|0

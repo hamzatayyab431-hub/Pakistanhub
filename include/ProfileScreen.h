@@ -9,65 +9,61 @@
 #include "UserManager.h"
 #include "SocialGraph.h"
 #include "CommentManager.h"
+#include "NavBar.h"
+#include "Animator.h"
 #include <memory>
 #include <vector>
 
 class ProfileScreen : public UIComponent {
 private:
-    sf::Font& font;
-    UserManager& userManager;
-    PostManager& postManager;
+    sf::Font&       font;
+    UserManager&    userManager;
+    PostManager&    postManager;
     CommentManager& commentManager;
-    SocialGraph& socialGraph;
-    User* currentUser;
-    User* targetUser;
+    SocialGraph&    socialGraph;
+    User*           currentUser;
+    User*           targetUser;
 
-    // Persistent Top Navigation Bar
-    sf::RectangleShape headerBackground;
-    sf::Text logoText;
-    sf::Text statusText;
-    std::unique_ptr<GlassButton> navHome;
-    std::unique_ptr<GlassButton> navSearch;
-    std::unique_ptr<GlassButton> navProfile;
-    std::unique_ptr<GlassButton> navLogout;
+    NavBar nav;
 
-    // Profile Header card
+    // Profile header card
     sf::RectangleShape headerCard;
-    sf::CircleShape avatarCircle;
-    sf::Text avatarLetter;
-    sf::RectangleShape navAccentLine;
     sf::Text nameText;
     sf::Text handleText;
     sf::Text bioText;
     sf::Text cityText;
     sf::Text statsText;
+
     std::unique_ptr<GlassButton> followButton;
     std::unique_ptr<GlassButton> editProfileButton;
     std::unique_ptr<GlassButton> saveProfileButton;
-    std::unique_ptr<TextInput> cityEditInput;
-    std::unique_ptr<TextInput> bioEditInput;
+    std::unique_ptr<TextInput>   cityEditInput;
+    std::unique_ptr<TextInput>   bioEditInput;
     bool isEditingProfile;
 
-    // Scrollable feed viewport
-    sf::View feedViewport;
-    float scrollOffset;
-    float targetScrollOffset;
-    float maxScrollOffset;
+    // Scrollable feed
+    sf::View       feedViewport;
+    float          scrollOffset;
+    float          targetScrollOffset;
+    float          maxScrollOffset;
 
-    // Empty state panel
-    sf::RectangleShape emptyCard;
+    sf::RectangleShape scrollTrack;
+    sf::RectangleShape scrollThumb;
+
     sf::Text emptyText;
 
     std::vector<std::unique_ptr<PostCard>> postCards;
     std::string clickedHandle;
-    int clickedPostId;
+    int         clickedPostId;
 
 public:
-    ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg);
+    ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
+                  CommentManager& cm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
     void update() override;
+    void update(float dt);
 
     void setTargetUser(User* user);
     void setCurrentUser(User* user);
@@ -78,10 +74,11 @@ public:
     bool isSearchClicked(sf::Event& event);
     bool isProfileClicked(sf::Event& event);
     bool isLogoutClicked(sf::Event& event);
+
     std::string getClickedHandle();
-    void clearClickedHandle();
-    int getClickedPostId();
-    void clearClickedPostId();
+    void        clearClickedHandle();
+    int         getClickedPostId();
+    void        clearClickedPostId();
 };
 
 #endif // PROFILESCREEN_H
