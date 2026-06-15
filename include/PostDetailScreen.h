@@ -1,17 +1,19 @@
-#ifndef PROFILESCREEN_H
-#define PROFILESCREEN_H
+#ifndef POSTDETAILSCREEN_H
+#define POSTDETAILSCREEN_H
 
 #include "UIComponent.h"
-#include "GlassButton.h"
 #include "PostCard.h"
+#include "CommentCard.h"
+#include "TextInput.h"
+#include "GlassButton.h"
 #include "PostManager.h"
 #include "UserManager.h"
-#include "SocialGraph.h"
 #include "CommentManager.h"
+#include "SocialGraph.h"
 #include <memory>
 #include <vector>
 
-class ProfileScreen : public UIComponent {
+class PostDetailScreen : public UIComponent {
 private:
     sf::Font& font;
     UserManager& userManager;
@@ -19,9 +21,10 @@ private:
     CommentManager& commentManager;
     SocialGraph& socialGraph;
     User* currentUser;
-    User* targetUser;
+    Post targetPost;
+    bool targetPostLiked;
 
-    // Persistent Top Navigation Bar
+    // Top Persistent Nav Bar
     sf::RectangleShape headerBackground;
     sf::Text logoText;
     sf::Text statusText;
@@ -30,48 +33,37 @@ private:
     std::unique_ptr<GlassButton> navProfile;
     std::unique_ptr<GlassButton> navLogout;
 
-    // Profile Header card
-    sf::RectangleShape headerCard;
-    sf::Text nameText;
-    sf::Text handleText;
-    sf::Text bioText;
-    sf::Text statsText;
-    std::unique_ptr<GlassButton> followButton;
+    // Full Post Card representation
+    std::unique_ptr<PostCard> postCard;
 
-    // Scrollable feed viewport
-    sf::View feedViewport;
+    // Scrollable comments viewport
+    sf::View commentViewport;
     float scrollOffset;
     float targetScrollOffset;
     float maxScrollOffset;
 
-    // Empty state panel
-    sf::RectangleShape emptyCard;
-    sf::Text emptyText;
+    std::vector<std::unique_ptr<CommentCard>> commentCards;
 
-    std::vector<std::unique_ptr<PostCard>> postCards;
-    std::string clickedHandle;
-    int clickedPostId;
+    // Reply area
+    sf::RectangleShape replyBackground;
+    std::unique_ptr<TextInput> replyInput;
+    std::unique_ptr<GlassButton> replyButton;
 
 public:
-    ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg);
+    PostDetailScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
     void update() override;
 
-    void setTargetUser(User* user);
+    void setTargetPost(const Post& post, bool liked);
     void setCurrentUser(User* user);
-    void reloadProfile();
+    void reloadComments();
 
-    bool isBackClicked(sf::Event& event, sf::RenderWindow& window);
     bool isHomeClicked(sf::Event& event);
     bool isSearchClicked(sf::Event& event);
     bool isProfileClicked(sf::Event& event);
     bool isLogoutClicked(sf::Event& event);
-    std::string getClickedHandle();
-    void clearClickedHandle();
-    int getClickedPostId();
-    void clearClickedPostId();
 };
 
-#endif // PROFILESCREEN_H
+#endif // POSTDETAILSCREEN_H

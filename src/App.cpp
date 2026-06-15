@@ -10,7 +10,7 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
         std::cerr << "Error: Failed to load font assets/fonts/Roboto-Regular.ttf!\n";
     }
 
-    // Load persisted users, posts, and follows
+    // Load persisted users, posts, follows, and comments
     if (!userManager.loadFromFile("data/users.txt")) {
         std::cerr << "Warning: Could not open data/users.txt, starting with empty database.\n";
     }
@@ -20,12 +20,17 @@ App::App() : window(sf::VideoMode(1280, 720), "PakistanHub", sf::Style::Titlebar
     if (!socialGraph.loadFromFile("data/follows.txt")) {
         std::cerr << "Warning: Could not open data/follows.txt, starting with empty graph.\n";
     }
+    if (!commentManager.loadFromFile("data/comments.txt")) {
+        std::cerr << "Warning: Could not open data/comments.txt, starting with empty database.\n";
+    }
 
     // Initialize screen objects
     loginScreen = std::make_unique<LoginScreen>(font);
     registerScreen = std::make_unique<RegisterScreen>(font);
-    feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager, socialGraph);
-    profileScreen = std::make_unique<ProfileScreen>(font, userManager, postManager, socialGraph);
+    feedScreen = std::make_unique<FeedScreen>(font, userManager, postManager, commentManager, socialGraph);
+    profileScreen = std::make_unique<ProfileScreen>(font, userManager, postManager, commentManager, socialGraph);
+    postDetailScreen = std::make_unique<PostDetailScreen>(font, userManager, postManager, commentManager, socialGraph);
+    searchScreen = std::make_unique<SearchScreen>(font, userManager, postManager, socialGraph);
 }
 
 void App::run() {
@@ -121,18 +126,40 @@ void App::processEvents() {
                 profileScreen->setTargetUser(currentUser);
                 currentState = AppState::PROFILE;
             }
+            else if (feedScreen->isSearchClicked(event)) {
+                searchScreen->setCurrentUser(currentUser);
+                searchScreen->reloadSearch();
+                currentState = AppState::SEARCH;
+            }
             else if (feedScreen->isHomeClicked(event)) {
                 feedScreen->reloadFeed();
             }
             else {
-                std::string clicked = feedScreen->getClickedHandle();
-                if (!clicked.empty()) {
-                    feedScreen->clearClickedHandle();
-                    User* target = userManager.findUser(clicked);
-                    if (target != nullptr) {
-                        profileScreen->setCurrentUser(currentUser);
-                        profileScreen->setTargetUser(target);
-                        currentState = AppState::PROFILE;
+                int postId = feedScreen->getClickedPostId();
+                if (postId != -1) {
+                    feedScreen->clearClickedPostId();
+                    Post* targetPostPtr = nullptr;
+                    for (const auto& p : postManager.getPosts()) {
+                        if (p.getPostId() == postId) {
+                            targetPostPtr = const_cast<Post*>(&p);
+                            break;
+                        }
+                    }
+                    if (targetPostPtr != nullptr) {
+                        postDetailScreen->setCurrentUser(currentUser);
+                        postDetailScreen->setTargetPost(*targetPostPtr, false);
+                        currentState = AppState::POST_DETAIL;
+                    }
+                } else {
+                    std::string clicked = feedScreen->getClickedHandle();
+                    if (!clicked.empty()) {
+                        feedScreen->clearClickedHandle();
+                        User* target = userManager.findUser(clicked);
+                        if (target != nullptr) {
+                            profileScreen->setCurrentUser(currentUser);
+                            profileScreen->setTargetUser(target);
+                            currentState = AppState::PROFILE;
+                        }
                     }
                 }
             }
@@ -148,16 +175,92 @@ void App::processEvents() {
                 feedScreen->reloadFeed();
                 currentState = AppState::FEED;
             }
+            else if (profileScreen->isSearchClicked(event)) {
+                searchScreen->setCurrentUser(currentUser);
+                searchScreen->reloadSearch();
+                currentState = AppState::SEARCH;
+            }
             else if (profileScreen->isProfileClicked(event)) {
                 profileScreen->setTargetUser(currentUser);
             }
             else {
-                std::string clicked = profileScreen->getClickedHandle();
+                int postId = profileScreen->getClickedPostId();
+                if (postId != -1) {
+                    profileScreen->clearClickedPostId();
+                    Post* targetPostPtr = nullptr;
+                    for (const auto& p : postManager.getPosts()) {
+                        if (p.getPostId() == postId) {
+                            targetPostPtr = const_cast<Post*>(&p);
+                            break;
+                        }
+                    }
+                    if (targetPostPtr != nullptr) {
+                        postDetailScreen->setCurrentUser(currentUser);
+                        postDetailScreen->setTargetPost(*targetPostPtr, false);
+                        currentState = AppState::POST_DETAIL;
+                    }
+                } else {
+                    std::string clicked = profileScreen->getClickedHandle();
+                    if (!clicked.empty()) {
+                        profileScreen->clearClickedHandle();
+                        User* target = userManager.findUser(clicked);
+                        if (target != nullptr) {
+                            profileScreen->setTargetUser(target);
+                        }
+                    }
+                }
+            }
+        }
+        else if (currentState == AppState::POST_DETAIL) {
+            postDetailScreen->handleEvent(event);
+
+            if (postDetailScreen->isLogoutClicked(event)) {
+                currentUser = nullptr;
+                currentState = AppState::LOGIN;
+            }
+            else if (postDetailScreen->isHomeClicked(event)) {
+                feedScreen->reloadFeed();
+                currentState = AppState::FEED;
+            }
+            else if (postDetailScreen->isSearchClicked(event)) {
+                searchScreen->setCurrentUser(currentUser);
+                searchScreen->reloadSearch();
+                currentState = AppState::SEARCH;
+            }
+            else if (postDetailScreen->isProfileClicked(event)) {
+                profileScreen->setCurrentUser(currentUser);
+                profileScreen->setTargetUser(currentUser);
+                currentState = AppState::PROFILE;
+            }
+        }
+        else if (currentState == AppState::SEARCH) {
+            searchScreen->handleEvent(event);
+
+            if (searchScreen->isLogoutClicked(event)) {
+                currentUser = nullptr;
+                currentState = AppState::LOGIN;
+            }
+            else if (searchScreen->isHomeClicked(event)) {
+                feedScreen->reloadFeed();
+                currentState = AppState::FEED;
+            }
+            else if (searchScreen->isProfileClicked(event)) {
+                profileScreen->setCurrentUser(currentUser);
+                profileScreen->setTargetUser(currentUser);
+                currentState = AppState::PROFILE;
+            }
+            else if (searchScreen->isSearchClicked(event)) {
+                searchScreen->reloadSearch();
+            }
+            else {
+                std::string clicked = searchScreen->getClickedHandle();
                 if (!clicked.empty()) {
-                    profileScreen->clearClickedHandle();
+                    searchScreen->clearClickedHandle();
                     User* target = userManager.findUser(clicked);
                     if (target != nullptr) {
+                        profileScreen->setCurrentUser(currentUser);
                         profileScreen->setTargetUser(target);
+                        currentState = AppState::PROFILE;
                     }
                 }
             }
@@ -174,6 +277,10 @@ void App::update() {
         feedScreen->update();
     } else if (currentState == AppState::PROFILE) {
         profileScreen->update();
+    } else if (currentState == AppState::POST_DETAIL) {
+        postDetailScreen->update();
+    } else if (currentState == AppState::SEARCH) {
+        searchScreen->update();
     }
 }
 
@@ -202,6 +309,10 @@ void App::render() {
         feedScreen->draw(window);
     } else if (currentState == AppState::PROFILE) {
         profileScreen->draw(window);
+    } else if (currentState == AppState::POST_DETAIL) {
+        postDetailScreen->draw(window);
+    } else if (currentState == AppState::SEARCH) {
+        searchScreen->draw(window);
     }
 
     window.display();

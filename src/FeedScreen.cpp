@@ -4,9 +4,9 @@
 
 
 
-FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGraph& sg)
-    : font(fnt), userManager(um), postManager(pm), socialGraph(sg), currentUser(nullptr),
-      activeTab(0), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle("") {
+FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg)
+    : font(fnt), userManager(um), postManager(pm), commentManager(cm), socialGraph(sg), currentUser(nullptr),
+      activeTab(0), scrollOffset(0.0f), targetScrollOffset(0.0f), maxScrollOffset(0.0f), clickedHandle(""), clickedPostId(-1) {
 
     // Configure header top bar
     headerBackground.setPosition(0.0f, 0.0f);
@@ -30,7 +30,8 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGr
     statusText.setPosition(200.0f, 22.0f);
 
     // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
+    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
     navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
     navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
 
@@ -104,6 +105,7 @@ void FeedScreen::reloadFeed() {
     postCards.clear();
     scrollOffset = 0.0f;
     targetScrollOffset = 0.0f;
+    clickedPostId = -1;
     feedViewport.setCenter(540.0f, 230.0f);
 
     // Load sorted posts
@@ -137,8 +139,9 @@ void FeedScreen::reloadFeed() {
         // Let's pass true/false. We can determine if liked by session user:
         // We'll set liked state depending on local toggleLike calls, but we can default liked status to false initially.
         bool liked = false; 
+        int commentCount = commentManager.getCommentCountForPost(post.getPostId());
 
-        auto card = std::make_unique<PostCard>(post, font, sf::Vector2f(0.0f, y), sf::Vector2f(1080.0f, 120.0f), liked);
+        auto card = std::make_unique<PostCard>(post, font, sf::Vector2f(0.0f, y), sf::Vector2f(1080.0f, 120.0f), liked, commentCount);
         y += card->getHeight() + 15.0f;
         postCards.push_back(std::move(card));
     }
@@ -152,6 +155,7 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     window.draw(logoText);
     window.draw(statusText);
     navHome->draw(window);
+    navSearch->draw(window);
     navProfile->draw(window);
     navLogout->draw(window);
 
@@ -184,6 +188,7 @@ void FeedScreen::handleEvent(sf::Event& event) {
     composeInput->handleEvent(event);
     postButton->handleEvent(event);
     navHome->handleEvent(event);
+    navSearch->handleEvent(event);
     navProfile->handleEvent(event);
     navLogout->handleEvent(event);
 
@@ -265,6 +270,11 @@ void FeedScreen::handleEvent(sf::Event& event) {
             clickedHandle = card->getAuthorUsername();
         }
 
+        // Handle comment clicks -> routes to PostDetailScreen
+        if (hasMouse && card->isCommentClicked(mappedEvent)) {
+            clickedPostId = card->getPostId();
+        }
+
         // Handle like button clicks
         if (hasMouse && card->isLikeClicked(mappedEvent)) {
             postManager.toggleLike(card->getPostId(), card->getIsLiked());
@@ -280,6 +290,14 @@ void FeedScreen::clearClickedHandle() {
     clickedHandle = "";
 }
 
+int FeedScreen::getClickedPostId() {
+    return clickedPostId;
+}
+
+void FeedScreen::clearClickedPostId() {
+    clickedPostId = -1;
+}
+
 void FeedScreen::update() {
     float lerpFactor = 0.15f;
     if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {
@@ -292,6 +310,10 @@ void FeedScreen::update() {
 
 bool FeedScreen::isHomeClicked(sf::Event& event) {
     return navHome->isClicked(event);
+}
+
+bool FeedScreen::isSearchClicked(sf::Event& event) {
+    return navSearch->isClicked(event);
 }
 
 bool FeedScreen::isProfileClicked(sf::Event& event) {

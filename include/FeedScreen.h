@@ -8,6 +8,7 @@
 #include "PostManager.h"
 #include "UserManager.h"
 #include "SocialGraph.h"
+#include "CommentManager.h"
 #include <memory>
 #include <vector>
 
@@ -16,6 +17,7 @@ private:
     sf::Font& font;
     UserManager& userManager;
     PostManager& postManager;
+    CommentManager& commentManager;
     SocialGraph& socialGraph;
     User* currentUser;
 
@@ -24,6 +26,7 @@ private:
     sf::Text logoText;
     sf::Text statusText;
     std::unique_ptr<GlassButton> navHome;
+    std::unique_ptr<GlassButton> navSearch;
     std::unique_ptr<GlassButton> navProfile;
     std::unique_ptr<GlassButton> navLogout;
 
@@ -50,11 +53,12 @@ private:
 
     std::vector<std::unique_ptr<PostCard>> postCards;
     std::string clickedHandle;
+    int clickedPostId;
 
     void updateCardPositions();
 
 public:
-    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, SocialGraph& sg);
+    FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
@@ -64,8 +68,11 @@ public:
     void setCurrentUser(User* user);
     std::string getClickedHandle();
     void clearClickedHandle();
+    int getClickedPostId();
+    void clearClickedPostId();
 
     bool isHomeClicked(sf::Event& event);
+    bool isSearchClicked(sf::Event& event);
     bool isProfileClicked(sf::Event& event);
     bool isLogoutClicked(sf::Event& event);
 };

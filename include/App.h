@@ -5,15 +5,18 @@
 #include "UserManager.h"
 #include "PostManager.h"
 #include "SocialGraph.h"
+#include "CommentManager.h"
 #include "LoginScreen.h"
 #include "RegisterScreen.h"
 #include "FeedScreen.h"
 #include "ProfileScreen.h"
+#include "PostDetailScreen.h"
+#include "SearchScreen.h"
 #include <memory>
 
 class App {
 public:
-    enum class AppState { LOGIN, REGISTER, FEED, PROFILE };
+    enum class AppState { LOGIN, REGISTER, FEED, PROFILE, POST_DETAIL, SEARCH };
 
 private:
     sf::RenderWindow window;
@@ -23,12 +26,15 @@ private:
     UserManager userManager;
     PostManager postManager;
     SocialGraph socialGraph;
+    CommentManager commentManager;
     User* currentUser;
 
     std::unique_ptr<LoginScreen> loginScreen;
     std::unique_ptr<RegisterScreen> registerScreen;
     std::unique_ptr<FeedScreen> feedScreen;
     std::unique_ptr<ProfileScreen> profileScreen;
+    std::unique_ptr<PostDetailScreen> postDetailScreen;
+    std::unique_ptr<SearchScreen> searchScreen;
 
     void processEvents();
     void update();

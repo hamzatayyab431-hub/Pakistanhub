@@ -20,17 +20,20 @@ private:
     sf::Text contentText;
     sf::Text dateText;
 
-    // Like button shapes
+    // Like and Comment buttons
     sf::RectangleShape likeButtonRect;
     sf::Text likeText;
+    sf::RectangleShape commentButtonRect;
+    sf::Text commentText;
 
 public:
-    PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz, bool liked = false);
+    PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz, bool liked = false, int commentsCount = 0);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
 
     bool isLikeClicked(sf::Event& event);
+    bool isCommentClicked(sf::Event& event);
     bool isHandleClicked(sf::Event& event);
     std::string getAuthorUsername() const { return post.getAuthorUsername(); }
     int getPostId() const;

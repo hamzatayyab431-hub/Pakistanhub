@@ -35,7 +35,7 @@ static std::string wrapText(const std::string& str, float width, const sf::Font&
     return result;
 }
 
-PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz, bool liked)
+PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, const sf::Vector2f& sz, bool liked, int commentsCount)
     : post(pst), font(fnt), position(pos), size(sz), isLiked(liked), isHovered(false) {
 
     // Wrap post text to the card's inner width
@@ -44,9 +44,6 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
     // Compute dynamic height based on the text line count
     size.y = 90.0f + (std::count(wrapped.begin(), wrapped.end(), '\n') + 1) * 21.0f;
     if (size.y < 120.0f) size.y = 120.0f;
-
-    // Set positions and sizes
-    setPosition(position);
 
     // Initial setup of text fields
     authorText.setFont(font);
@@ -73,7 +70,12 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
     likeText.setFont(font);
     likeText.setCharacterSize(12);
 
-    // Update positions of text elements relative to position
+    commentText.setFont(font);
+    commentText.setCharacterSize(12);
+    commentText.setFillColor(sf::Color(255, 255, 255, 200));
+    commentText.setString("💬 " + std::to_string(commentsCount));
+
+    // Set positions and sizes
     setPosition(position);
 }
 
@@ -103,10 +105,19 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
 
     // Like button placement
     likeButtonRect.setSize(sf::Vector2f(100.0f, 25.0f));
-    likeButtonRect.setPosition(position.x + size.x - 120.0f, position.y + size.y - 32.0f);
+    likeButtonRect.setPosition(position.x + size.x - 230.0f, position.y + size.y - 32.0f);
     likeButtonRect.setOutlineThickness(1.0f);
 
-    likeText.setPosition(position.x + size.x - 110.0f, position.y + size.y - 28.0f);
+    likeText.setPosition(position.x + size.x - 220.0f, position.y + size.y - 28.0f);
+
+    // Comment button placement
+    commentButtonRect.setSize(sf::Vector2f(100.0f, 25.0f));
+    commentButtonRect.setPosition(position.x + size.x - 120.0f, position.y + size.y - 32.0f);
+    commentButtonRect.setOutlineThickness(1.0f);
+    commentButtonRect.setFillColor(sf::Color(255, 255, 255, 30));
+    commentButtonRect.setOutlineColor(sf::Color(255, 255, 255, 60));
+
+    commentText.setPosition(position.x + size.x - 100.0f, position.y + size.y - 28.0f);
 
     toggleLikeState(); // Refresh color/labels
 }
@@ -142,12 +153,23 @@ void PostCard::draw(sf::RenderWindow& window) {
     window.draw(dateText);
     window.draw(likeButtonRect);
     window.draw(likeText);
+    window.draw(commentButtonRect);
+    window.draw(commentText);
 }
 
 void PostCard::handleEvent(sf::Event& event) {
     if (event.type == sf::Event::MouseMoved) {
         sf::Vector2f mousePos(static_cast<float>(event.mouseMove.x), static_cast<float>(event.mouseMove.y));
         isHovered = backgroundRect.getGlobalBounds().contains(mousePos);
+
+        // Highlight comment button on hover
+        if (commentButtonRect.getGlobalBounds().contains(mousePos)) {
+            commentButtonRect.setFillColor(sf::Color(255, 255, 255, 50));
+            commentButtonRect.setOutlineColor(sf::Color(0, 166, 81, 200));
+        } else {
+            commentButtonRect.setFillColor(sf::Color(255, 255, 255, 30));
+            commentButtonRect.setOutlineColor(sf::Color(255, 255, 255, 60));
+        }
     }
 }
 
@@ -164,6 +186,14 @@ bool PostCard::isLikeClicked(sf::Event& event) {
             toggleLikeState();
             return true;
         }
+    }
+    return false;
+}
+
+bool PostCard::isCommentClicked(sf::Event& event) {
+    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+        sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y));
+        return commentButtonRect.getGlobalBounds().contains(mousePos);
     }
     return false;
 }
