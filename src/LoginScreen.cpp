@@ -1,4 +1,6 @@
 #include "LoginScreen.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 
 // Local helper to center sf::Text horizontally
 static void centerTextHorizontally(sf::Text& text, float centerX) {
@@ -13,51 +15,53 @@ LoginScreen::LoginScreen(sf::Font& fnt) : font(fnt) {
     float cardX = (1280.0f - cardWidth) / 2.0f;
     float cardY = (720.0f - cardHeight) / 2.0f;
 
-    // Configure card background
+    // Configure card background position
     cardBackground.setPosition(cardX, cardY);
     cardBackground.setSize(sf::Vector2f(cardWidth, cardHeight));
-    cardBackground.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
-    cardBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    cardBackground.setOutlineThickness(1.0f);
 
     float centerX = cardX + cardWidth / 2.0f;
 
     // Title text
     titleText.setFont(font);
-    titleText.setCharacterSize(36);
+    titleText.setCharacterSize(42);
     titleText.setStyle(sf::Text::Bold);
-    titleText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    titleText.setFillColor(Theme::GREEN_PRIMARY);
     titleText.setString("PakistanHub");
-    titleText.setPosition(centerX, cardY + 40.0f);
+    titleText.setPosition(centerX, cardY + 30.0f);
     centerTextHorizontally(titleText, centerX);
 
     // Subtitle text
     subtitleText.setFont(font);
     subtitleText.setCharacterSize(16);
-    subtitleText.setFillColor(sf::Color(255, 255, 255, 150));
-    subtitleText.setString("Sign in to your account");
-    subtitleText.setPosition(centerX, cardY + 95.0f);
+    subtitleText.setFillColor(Theme::TEXT_MUTED);
+    subtitleText.setString("Connect with Pakistan");
+    subtitleText.setPosition(centerX, cardY + 85.0f);
     centerTextHorizontally(subtitleText, centerX);
 
+    // Divider line
+    sf::RectangleShape divider(sf::Vector2f(cardWidth, 1.0f));
+    divider.setPosition(cardX, cardY + 120.0f);
+    divider.setFillColor(Theme::GLASS_BORDER);
+
     // Inputs
-    float inputWidth = 340.0f;
+    float inputWidth = 360.0f;
     float inputHeight = 45.0f;
     float inputX = cardX + (cardWidth - inputWidth) / 2.0f;
 
     usernameInput = std::make_unique<TextInput>(
-        sf::Vector2f(inputX, cardY + 140.0f),
+        sf::Vector2f(inputX, cardY + 150.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "Username"
     );
 
     passwordInput = std::make_unique<TextInput>(
-        sf::Vector2f(inputX, cardY + 210.0f),
+        sf::Vector2f(inputX, cardY + 220.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "Password", true
     );
 
     loginButton = std::make_unique<GlassButton>(
-        sf::Vector2f(inputX, cardY + 290.0f),
+        sf::Vector2f(inputX, cardY + 300.0f),
         sf::Vector2f(inputWidth, inputHeight),
         font, "LOGIN"
     );
@@ -65,24 +69,31 @@ LoginScreen::LoginScreen(sf::Font& fnt) : font(fnt) {
     // Register Link
     registerLink.setFont(font);
     registerLink.setCharacterSize(14);
-    registerLink.setFillColor(sf::Color(0, 166, 81, 180));
+    registerLink.setFillColor(Theme::TEXT_MUTED);
     registerLink.setString("Don't have an account? Register");
-    registerLink.setPosition(centerX, cardY + 365.0f);
+    registerLink.setPosition(centerX, cardY + 370.0f);
     centerTextHorizontally(registerLink, centerX);
 
-    // Error message text
+    // Error text
     errorText.setFont(font);
     errorText.setCharacterSize(14);
-    errorText.setFillColor(sf::Color(220, 53, 69)); // BootStrap Red
+    errorText.setFillColor(Theme::ACCENT_RED);
     errorText.setString("");
     errorText.setPosition(centerX, cardY + 410.0f);
-    centerTextHorizontally(errorText, centerX);
 }
 
 void LoginScreen::draw(sf::RenderWindow& window) {
-    window.draw(cardBackground);
+    // Use GlassPanel to draw the card
+    GlassPanel::draw(window, cardBackground.getGlobalBounds(), false, 1.0f);
+
     window.draw(titleText);
     window.draw(subtitleText);
+
+    // Draw a divider line
+    sf::RectangleShape divider(sf::Vector2f(cardBackground.getSize().x, 1.0f));
+    divider.setPosition(cardBackground.getPosition().x, cardBackground.getPosition().y + 120.0f);
+    divider.setFillColor(Theme::GLASS_BORDER);
+    window.draw(divider);
 
     usernameInput->draw(window);
     passwordInput->draw(window);

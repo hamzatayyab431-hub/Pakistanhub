@@ -14,18 +14,17 @@ private:
     bool isHovered;
 
     sf::RectangleShape backgroundRect;
-    sf::RectangleShape shadowRect; // Green outline glow on hover
     sf::Text authorText;
     sf::Text handleText;
-    sf::Text contentText;
     sf::Text dateText;
-
-    // Like and Comment buttons
-    sf::RectangleShape likeButtonRect;
+    sf::Text contentText;
     sf::Text likeText;
-    sf::RectangleShape commentButtonRect;
     sf::Text commentText;
 
+    sf::RectangleShape likeButtonRect;
+    sf::RectangleShape commentButtonRect;
+
+    // Redesign elements
     sf::CircleShape avatarCircle;
     sf::Text avatarLetter;
     sf::RectangleShape accentBar;

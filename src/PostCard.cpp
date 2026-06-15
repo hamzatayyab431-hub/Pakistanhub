@@ -1,4 +1,6 @@
 #include "PostCard.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <sstream>
 #include <algorithm>
 #include <cctype>
@@ -55,17 +57,17 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
 
     handleText.setFont(font);
     handleText.setCharacterSize(14);
-    handleText.setFillColor(sf::Color(255, 255, 255, 140));
+    handleText.setFillColor(Theme::TEXT_MUTED);
     handleText.setString("@" + post.getAuthorUsername());
 
     contentText.setFont(font);
     contentText.setCharacterSize(15);
-    contentText.setFillColor(sf::Color::White);
+    contentText.setFillColor(Theme::TEXT_PRIMARY);
     contentText.setString(wrapped);
 
     dateText.setFont(font);
     dateText.setCharacterSize(12);
-    dateText.setFillColor(sf::Color(255, 255, 255, 130));
+    dateText.setFillColor(Theme::TEXT_MUTED);
     dateText.setString(post.getFormattedDate());
 
     likeText.setFont(font);
@@ -73,12 +75,12 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
 
     commentText.setFont(font);
     commentText.setCharacterSize(12);
-    commentText.setFillColor(sf::Color(255, 255, 255, 200));
+    commentText.setFillColor(Theme::TEXT_MUTED);
     commentText.setString("Comments (" + std::to_string(commentsCount) + ")");
 
     // Avatar circle
     avatarCircle.setRadius(20);
-    avatarCircle.setOutlineColor(sf::Color(0, 166, 81, 180));
+    avatarCircle.setOutlineColor(Theme::GREEN_PRIMARY);
     avatarCircle.setOutlineThickness(1.5f);
     avatarCircle.setFillColor(sf::Color::Transparent);
     avatarCircle.setPosition(position.x + 20, position.y + 15);
@@ -105,16 +107,9 @@ PostCard::PostCard(const Post& pst, sf::Font& fnt, const sf::Vector2f& pos, cons
 void PostCard::setPosition(const sf::Vector2f& pos) {
     position = pos;
 
-    // Background and shadow boxes
+    // Background rect used for bounds logic only
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
-    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    backgroundRect.setOutlineThickness(1.0f);
-
-    shadowRect.setPosition(position - sf::Vector2f(2, 2));
-    shadowRect.setSize(size + sf::Vector2f(4, 4));
-    shadowRect.setFillColor(sf::Color(0, 166, 81, 35)); // low alpha green shadow
 
     // Accent bar
     accentBar.setPosition(position.x, position.y);
@@ -164,29 +159,20 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
 
 void PostCard::toggleLikeState() {
     if (isLiked) {
-        likeText.setFillColor(sf::Color(0, 166, 81)); // Green liked color
+        likeText.setFillColor(Theme::GREEN_PRIMARY); // Green liked color
         likeText.setString("Liked (" + std::to_string(post.getLikeCount()) + ")");
-        likeButtonRect.setOutlineColor(sf::Color(0, 166, 81, 200));
-        likeButtonRect.setFillColor(sf::Color(0, 166, 81, 20));
+        likeButtonRect.setOutlineColor(Theme::GREEN_PRIMARY);
+        likeButtonRect.setFillColor(Theme::GLASS_FILL);
     } else {
-        likeText.setFillColor(sf::Color(255, 255, 255, 150));
+        likeText.setFillColor(Theme::TEXT_MUTED);
         likeText.setString("Like (" + std::to_string(post.getLikeCount()) + ")");
-        likeButtonRect.setOutlineColor(sf::Color(255, 255, 255, 50));
-        likeButtonRect.setFillColor(sf::Color(255, 255, 255, 10));
+        likeButtonRect.setOutlineColor(Theme::GLASS_BORDER);
+        likeButtonRect.setFillColor(Theme::GLASS_FILL);
     }
 }
 
 void PostCard::draw(sf::RenderWindow& window) {
-    if (isHovered) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 120));
-        window.draw(shadowRect);
-    } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // Alpha 30 fill
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // Alpha 60 outline
-    }
-
-    window.draw(backgroundRect);
+    GlassPanel::draw(window, backgroundRect.getGlobalBounds(), isHovered, 1.0f);
     window.draw(accentBar);
     window.draw(avatarCircle);
     window.draw(avatarLetter);

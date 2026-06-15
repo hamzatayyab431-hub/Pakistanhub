@@ -1,54 +1,63 @@
 #include "GlassButton.h"
+#include "Theme.h"
 
-GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& labelStr)
-    : position(pos), size(sz), font(fnt), labelString(labelStr), isHovered(false), isEnabled(true) {
+GlassButton::GlassButton(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& labelStr, Type type)
+    : position(pos), size(sz), font(fnt), labelString(labelStr), isHovered(false), isEnabled(true), buttonType(type) {
 
     // Configure background rectangle
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
-    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    backgroundRect.setOutlineThickness(1.0f);
-
-    // Configure glow shadow
-    shadowRect.setPosition(position - sf::Vector2f(2, 2));
-    shadowRect.setSize(size + sf::Vector2f(4, 4));
-    shadowRect.setFillColor(sf::Color(0, 166, 81, 40)); // 40 alpha green
-    shadowRect.setOutlineThickness(0);
 
     // Configure label text
     unsigned int charSize = static_cast<unsigned int>(size.y * 0.40f);
     labelText.setFont(font);
     labelText.setCharacterSize(charSize);
-    labelText.setFillColor(sf::Color::White);
     labelText.setString(labelString);
+
+    if (buttonType == Type::PRIMARY) {
+        labelText.setStyle(sf::Text::Bold);
+    }
 
     // Center the text origin inside the button bounds
     sf::FloatRect textRect = labelText.getLocalBounds();
     labelText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-    labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+    labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f - 2.0f);
 }
 
 void GlassButton::draw(sf::RenderWindow& window) {
     if (!isEnabled) {
-        backgroundRect.setFillColor(sf::Color(100, 100, 100, 20)); // Greyed-out fill
-        backgroundRect.setOutlineColor(sf::Color(100, 100, 100, 40)); // Greyed-out border
-        labelText.setFillColor(sf::Color(150, 150, 150, 100)); // Greyed-out label
+        backgroundRect.setFillColor(sf::Color(100, 100, 100, 20));
+        backgroundRect.setOutlineColor(sf::Color(100, 100, 100, 40));
+        backgroundRect.setOutlineThickness(1.0f);
+        labelText.setFillColor(sf::Color(150, 150, 150, 100));
         window.draw(backgroundRect);
         window.draw(labelText);
         return;
     }
 
-    if (isHovered) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
-        backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 200)); // Active green border
-        window.draw(shadowRect); // Draw green glow shadow
+    if (buttonType == Type::PRIMARY) {
+        backgroundRect.setFillColor(isHovered ? Theme::GREEN_DIM : Theme::GREEN_PRIMARY);
+        backgroundRect.setOutlineThickness(0.0f);
+        labelText.setFillColor(Theme::BG_DARK);
+    } else if (buttonType == Type::NAV_ACTIVE) {
+        backgroundRect.setFillColor(Theme::GREEN_PRIMARY);
+        backgroundRect.setOutlineThickness(0.0f);
+        labelText.setFillColor(Theme::BG_DARK);
     } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // Alpha 30 fill
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // Alpha 60 white border
+        // NAV_DEFAULT
+        if (isHovered) {
+            backgroundRect.setFillColor(Theme::GLASS_FILL);
+            backgroundRect.setOutlineColor(Theme::GREEN_PRIMARY);
+            backgroundRect.setOutlineThickness(1.5f);
+            labelText.setFillColor(Theme::TEXT_PRIMARY);
+        } else {
+            backgroundRect.setFillColor(sf::Color::Transparent);
+            backgroundRect.setOutlineColor(Theme::GLASS_BORDER);
+            backgroundRect.setOutlineThickness(1.0f);
+            labelText.setFillColor(Theme::TEXT_MUTED);
+        }
     }
 
-    labelText.setFillColor(sf::Color::White); // Ensure white when enabled
     window.draw(backgroundRect);
     window.draw(labelText);
 }
@@ -76,9 +85,9 @@ bool GlassButton::isClicked(sf::Event& event) {
 void GlassButton::setPosition(const sf::Vector2f& pos) {
     position = pos;
     backgroundRect.setPosition(position);
-    shadowRect.setPosition(position - sf::Vector2f(2, 2));
-
-    labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+    
+    sf::FloatRect textRect = labelText.getLocalBounds();
+    labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f - 2.0f);
 }
 
 void GlassButton::setEnabled(bool enabled) {
@@ -87,4 +96,17 @@ void GlassButton::setEnabled(bool enabled) {
 
 bool GlassButton::getEnabled() const {
     return isEnabled;
+}
+
+void GlassButton::setType(Type type) {
+    buttonType = type;
+    if (buttonType == Type::PRIMARY) {
+        labelText.setStyle(sf::Text::Bold);
+    } else {
+        labelText.setStyle(sf::Text::Regular);
+    }
+    // Re-center just in case font style changes bounds slightly
+    sf::FloatRect textRect = labelText.getLocalBounds();
+    labelText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+    labelText.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f - 2.0f);
 }

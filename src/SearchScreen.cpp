@@ -1,4 +1,6 @@
 #include "SearchScreen.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <algorithm>
 #include <iostream>
 #include <cctype>
@@ -21,14 +23,11 @@ SearchResultCard::SearchResultCard(User* usr, sf::Font& fnt, const sf::Vector2f&
 
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30));
-    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60));
-    backgroundRect.setOutlineThickness(1.0f);
 
     // Green accent bar on left
     accentBar.setPosition(position.x, position.y);
     accentBar.setSize(sf::Vector2f(4.0f, size.y));
-    accentBar.setFillColor(sf::Color(0, 166, 81));
+    accentBar.setFillColor(Theme::GREEN_PRIMARY);
 
     // Avatar circle with user initial
     avatarCircle.setRadius(22.0f);
@@ -50,34 +49,27 @@ SearchResultCard::SearchResultCard(User* usr, sf::Font& fnt, const sf::Vector2f&
     displayNameText.setFont(font);
     displayNameText.setCharacterSize(16);
     displayNameText.setStyle(sf::Text::Bold);
-    displayNameText.setFillColor(sf::Color::White);
+    displayNameText.setFillColor(Theme::TEXT_PRIMARY);
     displayNameText.setString(user->getDisplayName());
     displayNameText.setPosition(position.x + 68.0f, position.y + 15.0f);
 
     usernameText.setFont(font);
     usernameText.setCharacterSize(13);
-    usernameText.setFillColor(sf::Color(255, 255, 255, 140));
+    usernameText.setFillColor(Theme::TEXT_MUTED);
     usernameText.setString("@" + user->getUsername());
     float nameWidth = displayNameText.getGlobalBounds().width;
     usernameText.setPosition(position.x + 68.0f + nameWidth + 8.0f, position.y + 17.0f);
 
     statsText.setFont(font);
     statsText.setCharacterSize(12);
-    statsText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green stats
+    statsText.setFillColor(Theme::GREEN_PRIMARY);
     statsText.setString(std::to_string(user->getFollowerCount()) + " Followers  |  " + std::to_string(user->getFollowingCount()) + " Following");
     statsText.setPosition(position.x + 68.0f, position.y + 45.0f);
 }
 
 void SearchResultCard::draw(sf::RenderWindow& window) {
-    if (isHovered) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50));
-        backgroundRect.setOutlineColor(sf::Color(0, 166, 81, 200));
-    } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30));
-        backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60));
-    }
+    GlassPanel::draw(window, backgroundRect.getGlobalBounds(), isHovered, 1.0f);
 
-    window.draw(backgroundRect);
     window.draw(accentBar);
     window.draw(avatarCircle);
     window.draw(avatarLetter);
@@ -114,34 +106,34 @@ SearchScreen::SearchScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Soci
     // Configure header top bar
     headerBackground.setPosition(0.0f, 0.0f);
     headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
-    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
-    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
+    headerBackground.setFillColor(Theme::GLASS_FILL);
+    headerBackground.setOutlineColor(Theme::GLASS_BORDER);
     headerBackground.setOutlineThickness(1.0f);
 
     // App logo
     logoText.setFont(font);
-    logoText.setCharacterSize(22);
+    logoText.setCharacterSize(24);
     logoText.setStyle(sf::Text::Bold);
-    logoText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    logoText.setFillColor(Theme::GREEN_PRIMARY);
     logoText.setString("PakistanHub");
     logoText.setPosition(40.0f, 15.0f);
 
     // Status text
     statusText.setFont(font);
     statusText.setCharacterSize(13);
-    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setFillColor(Theme::TEXT_MUTED);
     statusText.setPosition(200.0f, 22.0f);
 
     // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
-    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
-    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
-    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home", GlassButton::Type::NAV_DEFAULT);
+    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search", GlassButton::Type::NAV_ACTIVE);
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile", GlassButton::Type::NAV_DEFAULT);
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout", GlassButton::Type::NAV_DEFAULT);
 
     // Nav accent line
     navAccentLine.setPosition(0.0f, 60.0f);
-    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
-    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 1.0f));
+    navAccentLine.setFillColor(Theme::GLASS_BORDER);
 
     // Search query TextInput
     searchInput = std::make_unique<TextInput>(
@@ -202,7 +194,7 @@ void SearchScreen::updateResults() {
 
 void SearchScreen::draw(sf::RenderWindow& window) {
     // 1. Draw static Header
-    window.draw(headerBackground);
+    GlassPanel::draw(window, headerBackground.getGlobalBounds(), false, 1.0f);
     window.draw(logoText);
     window.draw(statusText);
     navHome->draw(window);

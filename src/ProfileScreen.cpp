@@ -1,9 +1,9 @@
 #include "ProfileScreen.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <algorithm>
 #include <iostream>
 #include <cctype>
-
-
 
 ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg)
     : font(fnt), userManager(um), postManager(pm), commentManager(cm), socialGraph(sg), currentUser(nullptr),
@@ -12,29 +12,26 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     // Configure header top bar (identical to FeedScreen)
     headerBackground.setPosition(0.0f, 0.0f);
     headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
-    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
-    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    headerBackground.setOutlineThickness(1.0f);
 
     // App logo
     logoText.setFont(font);
-    logoText.setCharacterSize(22);
+    logoText.setCharacterSize(24);
     logoText.setStyle(sf::Text::Bold);
-    logoText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    logoText.setFillColor(Theme::GREEN_PRIMARY);
     logoText.setString("PakistanHub");
     logoText.setPosition(40.0f, 15.0f);
 
     // Status text
     statusText.setFont(font);
     statusText.setCharacterSize(13);
-    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setFillColor(Theme::TEXT_MUTED);
     statusText.setPosition(200.0f, 22.0f);
 
     // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
-    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
-    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
-    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home", GlassButton::Type::NAV_DEFAULT);
+    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search", GlassButton::Type::NAV_DEFAULT);
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile", GlassButton::Type::NAV_ACTIVE);
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout", GlassButton::Type::NAV_DEFAULT);
 
     // Profile header card background
     headerCard.setPosition(100.0f, 75.0f);
@@ -45,8 +42,8 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
 
     // Nav accent line
     navAccentLine.setPosition(0.0f, 60.0f);
-    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
-    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 1.0f));
+    navAccentLine.setFillColor(Theme::GLASS_BORDER);
 
     // Avatar circle on profile header
     avatarCircle.setRadius(30.0f);
@@ -79,25 +76,25 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm, Co
     nameText.setFont(font);
     nameText.setCharacterSize(22);
     nameText.setStyle(sf::Text::Bold);
-    nameText.setFillColor(sf::Color::White);
+    nameText.setFillColor(Theme::TEXT_PRIMARY);
     nameText.setPosition(195.0f, 88.0f);
 
     // Profile Handle (@username)
     handleText.setFont(font);
     handleText.setCharacterSize(14);
-    handleText.setFillColor(sf::Color(255, 255, 255, 140));
+    handleText.setFillColor(Theme::TEXT_MUTED);
 
     // Profile Bio
     bioText.setFont(font);
     bioText.setCharacterSize(14);
-    bioText.setFillColor(sf::Color(255, 255, 255, 180));
+    bioText.setFillColor(Theme::TEXT_PRIMARY);
     bioText.setPosition(195.0f, 138.0f);
 
     // Profile Stats counts
     statsText.setFont(font);
     statsText.setCharacterSize(14);
     statsText.setStyle(sf::Text::Bold);
-    statsText.setFillColor(sf::Color(0, 166, 81));
+    statsText.setFillColor(Theme::GREEN_PRIMARY);
     statsText.setPosition(195.0f, 172.0f);
 
     // Follow Button
@@ -195,7 +192,7 @@ void ProfileScreen::reloadProfile() {
 
 void ProfileScreen::draw(sf::RenderWindow& window) {
     // 1. Draw static Header
-    window.draw(headerBackground);
+    GlassPanel::draw(window, headerBackground.getGlobalBounds(), false, 1.0f);
     window.draw(logoText);
     window.draw(statusText);
     navHome->draw(window);
@@ -204,8 +201,8 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     navLogout->draw(window);
     window.draw(navAccentLine);
 
-    // Draw header card panel
-    window.draw(headerCard);
+    // 2. Draw profile header card
+    GlassPanel::draw(window, headerCard.getGlobalBounds(), false, 1.0f);
     window.draw(avatarCircle);
     window.draw(avatarLetter);
     window.draw(nameText);

@@ -16,15 +16,15 @@ private:
     bool isHovered;
 
     // UI Shapes
-    sf::RectangleShape backgroundRect;
-    sf::RectangleShape shadowRect; // Green glow behind input when focused
     sf::Text displayedText;
     sf::Text placeholderText;
+    sf::Clock cursorClock;
+    size_t maxLength;
 
     void updateDisplayedText();
 
 public:
-    TextInput(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& placeholderStr = "", bool isPass = false);
+    TextInput(const sf::Vector2f& pos, const sf::Vector2f& sz, sf::Font& fnt, const std::string& placeholderStr = "", bool isPass = false, size_t maxLen = 280);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;

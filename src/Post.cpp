@@ -26,7 +26,7 @@ std::string Post::getFormattedDate() const {
     // Convert time_t to tm structure safely
     std::tm* timeinfo = std::localtime(&timestamp);
     if (timeinfo) {
-        std::strftime(buffer, sizeof(buffer), "%d %b %Y", timeinfo);
+        std::strftime(buffer, sizeof(buffer), "%b %d, %Y", timeinfo);
         return std::string(buffer);
     }
     return "01 Jan 1970";

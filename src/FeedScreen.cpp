@@ -1,8 +1,8 @@
 #include "FeedScreen.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <algorithm>
 #include <iostream>
-
-
 
 FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentManager& cm, SocialGraph& sg)
     : font(fnt), userManager(um), postManager(pm), commentManager(cm), socialGraph(sg), currentUser(nullptr),
@@ -11,41 +11,35 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentM
     // Configure header top bar
     headerBackground.setPosition(0.0f, 0.0f);
     headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
-    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
-    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    headerBackground.setOutlineThickness(1.0f);
 
     // App logo
     logoText.setFont(font);
-    logoText.setCharacterSize(22);
+    logoText.setCharacterSize(24);
     logoText.setStyle(sf::Text::Bold);
-    logoText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    logoText.setFillColor(Theme::GREEN_PRIMARY);
     logoText.setString("PakistanHub");
     logoText.setPosition(40.0f, 15.0f);
 
     // Status text
     statusText.setFont(font);
     statusText.setCharacterSize(13);
-    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setFillColor(Theme::TEXT_MUTED);
     statusText.setPosition(200.0f, 22.0f);
 
     // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
-    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
-    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
-    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home", GlassButton::Type::NAV_ACTIVE);
+    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search", GlassButton::Type::NAV_DEFAULT);
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile", GlassButton::Type::NAV_DEFAULT);
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout", GlassButton::Type::NAV_DEFAULT);
 
     // Nav accent line
     navAccentLine.setPosition(0.0f, 60.0f);
-    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
-    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 1.0f));
+    navAccentLine.setFillColor(Theme::GLASS_BORDER);
 
     // Compose panel background
     composePanel.setPosition(100.0f, 80.0f);
     composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
-    composePanel.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic panel
-    composePanel.setOutlineColor(sf::Color(255, 255, 255, 60));
-    composePanel.setOutlineThickness(1.0f);
 
     // Setup empty state elements
     emptyCard.setSize(sf::Vector2f(600.0f, 80.0f));
@@ -82,21 +76,24 @@ FeedScreen::FeedScreen(sf::Font& fnt, UserManager& um, PostManager& pm, CommentM
     forYouText.setStyle(sf::Text::Bold);
     forYouText.setString("For You");
     forYouText.setPosition(120.0f, 205.0f);
+    forYouText.setFillColor(Theme::TEXT_PRIMARY);
 
     followingText.setFont(font);
     followingText.setCharacterSize(16);
     followingText.setStyle(sf::Text::Bold);
     followingText.setString("Following");
     followingText.setPosition(220.0f, 205.0f);
+    followingText.setFillColor(Theme::TEXT_MUTED);
 
     friendsText.setFont(font);
     friendsText.setCharacterSize(16);
     friendsText.setStyle(sf::Text::Bold);
     friendsText.setString("Friends");
     friendsText.setPosition(340.0f, 205.0f);
+    friendsText.setFillColor(Theme::TEXT_MUTED);
 
     tabIndicator.setSize(sf::Vector2f(70.0f, 3.0f));
-    tabIndicator.setFillColor(sf::Color(0, 166, 81));
+    tabIndicator.setFillColor(Theme::GREEN_PRIMARY);
     tabIndicator.setPosition(120.0f, 230.0f);
 
     // Setup scrollable view (clips inside y = 240 to y = 710)
@@ -122,25 +119,13 @@ void FeedScreen::reloadFeed() {
     // Load sorted posts
     std::vector<Post> sortedPosts = postManager.getAllPostsSorted();
     
-    // Position tab indicator underline
+    // Position tab indicator underline (width logic, color is handled in update())
     if (activeTab == 0) {
-        forYouText.setFillColor(sf::Color(0, 166, 81));
-        followingText.setFillColor(sf::Color(255, 255, 255, 150));
-        friendsText.setFillColor(sf::Color(255, 255, 255, 150));
         tabIndicator.setSize(sf::Vector2f(forYouText.getGlobalBounds().width, 3.0f));
-        tabIndicator.setPosition(forYouText.getPosition().x, 230.0f);
     } else if (activeTab == 1) {
-        forYouText.setFillColor(sf::Color(255, 255, 255, 150));
-        followingText.setFillColor(sf::Color(0, 166, 81));
-        friendsText.setFillColor(sf::Color(255, 255, 255, 150));
         tabIndicator.setSize(sf::Vector2f(followingText.getGlobalBounds().width, 3.0f));
-        tabIndicator.setPosition(followingText.getPosition().x, 230.0f);
     } else {
-        forYouText.setFillColor(sf::Color(255, 255, 255, 150));
-        followingText.setFillColor(sf::Color(255, 255, 255, 150));
-        friendsText.setFillColor(sf::Color(0, 166, 81));
         tabIndicator.setSize(sf::Vector2f(friendsText.getGlobalBounds().width, 3.0f));
-        tabIndicator.setPosition(friendsText.getPosition().x, 230.0f);
     }
 
     float y = 10.0f;
@@ -177,7 +162,7 @@ void FeedScreen::reloadFeed() {
 
 void FeedScreen::draw(sf::RenderWindow& window) {
     // 1. Draw static Header
-    window.draw(headerBackground);
+    GlassPanel::draw(window, headerBackground.getGlobalBounds(), false, 1.0f);
     window.draw(logoText);
     window.draw(statusText);
     navHome->draw(window);
@@ -187,7 +172,7 @@ void FeedScreen::draw(sf::RenderWindow& window) {
     window.draw(navAccentLine);
 
     // 2. Draw Compose area
-    window.draw(composePanel);
+    GlassPanel::draw(window, composePanel.getGlobalBounds(), false, 1.0f);
     composeInput->draw(window);
     postButton->draw(window);
 
@@ -226,21 +211,21 @@ void FeedScreen::handleEvent(sf::Event& event) {
         
         // Tabs hover
         if (forYouText.getGlobalBounds().contains(mousePos) && activeTab != 0) {
-            forYouText.setFillColor(sf::Color::White);
+            forYouText.setFillColor(Theme::TEXT_PRIMARY);
         } else if (activeTab != 0) {
-            forYouText.setFillColor(sf::Color(255, 255, 255, 150));
+            forYouText.setFillColor(Theme::TEXT_MUTED);
         }
 
         if (followingText.getGlobalBounds().contains(mousePos) && activeTab != 1) {
-            followingText.setFillColor(sf::Color::White);
+            followingText.setFillColor(Theme::TEXT_PRIMARY);
         } else if (activeTab != 1) {
-            followingText.setFillColor(sf::Color(255, 255, 255, 150));
+            followingText.setFillColor(Theme::TEXT_MUTED);
         }
 
         if (friendsText.getGlobalBounds().contains(mousePos) && activeTab != 2) {
-            friendsText.setFillColor(sf::Color::White);
+            friendsText.setFillColor(Theme::TEXT_PRIMARY);
         } else if (activeTab != 2) {
-            friendsText.setFillColor(sf::Color(255, 255, 255, 150));
+            friendsText.setFillColor(Theme::TEXT_MUTED);
         }
     }
 
@@ -338,6 +323,7 @@ void FeedScreen::clearClickedPostId() {
 }
 
 void FeedScreen::update() {
+    // Compose focus expanding
     if (composeInput && postButton) {
         bool hasContent = false;
         std::string text = composeInput->getText();
@@ -348,7 +334,31 @@ void FeedScreen::update() {
             }
         }
         postButton->setEnabled(hasContent);
+
+        // Expand compose panel if focused
+        if (composeInput->getFocus()) {
+            composePanel.setSize(sf::Vector2f(1080.0f, 130.0f));
+        } else {
+            composePanel.setSize(sf::Vector2f(1080.0f, 110.0f));
+        }
     }
+
+    // Smooth tab indicator transition
+    float targetTabX = 120.0f;
+    float targetTabWidth = 70.0f;
+    if (activeTab == 0) { targetTabX = 120.0f; targetTabWidth = 60.0f; }
+    else if (activeTab == 1) { targetTabX = 220.0f; targetTabWidth = 80.0f; }
+    else if (activeTab == 2) { targetTabX = 340.0f; targetTabWidth = 60.0f; }
+    
+    sf::Vector2f currentPos = tabIndicator.getPosition();
+    sf::Vector2f currentSize = tabIndicator.getSize();
+    tabIndicator.setPosition(currentPos.x + (targetTabX - currentPos.x) * 0.2f, currentPos.y);
+    tabIndicator.setSize(sf::Vector2f(currentSize.x + (targetTabWidth - currentSize.x) * 0.2f, currentSize.y));
+
+    // Colors
+    forYouText.setFillColor(activeTab == 0 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
+    followingText.setFillColor(activeTab == 1 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
+    friendsText.setFillColor(activeTab == 2 ? Theme::TEXT_PRIMARY : Theme::TEXT_MUTED);
 
     float lerpFactor = 0.15f;
     if (std::abs(targetScrollOffset - scrollOffset) > 0.05f) {

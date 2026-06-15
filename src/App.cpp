@@ -133,9 +133,12 @@ void App::processEvents() {
                 std::string username = registerScreen->getUsername();
                 std::string displayName = registerScreen->getDisplayName();
                 std::string password = registerScreen->getPassword();
+                std::string confirmPass = registerScreen->getConfirmPassword();
 
-                if (username.empty() || displayName.empty() || password.empty()) {
+                if (username.empty() || displayName.empty() || password.empty() || confirmPass.empty()) {
                     registerScreen->setErrorMessage("Please fill in all fields.");
+                } else if (password != confirmPass) {
+                    registerScreen->setErrorMessage("Passwords do not match.");
                 } else if (username.find('|') != std::string::npos || 
                            displayName.find('|') != std::string::npos || 
                            password.find('|') != std::string::npos) {

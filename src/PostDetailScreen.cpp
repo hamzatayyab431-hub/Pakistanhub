@@ -1,4 +1,6 @@
 #include "PostDetailScreen.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <algorithm>
 #include <iostream>
 
@@ -9,34 +11,31 @@ PostDetailScreen::PostDetailScreen(sf::Font& fnt, UserManager& um, PostManager& 
     // Configure header top bar
     headerBackground.setPosition(0.0f, 0.0f);
     headerBackground.setSize(sf::Vector2f(1280.0f, 60.0f));
-    headerBackground.setFillColor(sf::Color(255, 255, 255, 30)); // Glassmorphic background
-    headerBackground.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    headerBackground.setOutlineThickness(1.0f);
 
     // App logo
     logoText.setFont(font);
-    logoText.setCharacterSize(22);
+    logoText.setCharacterSize(24);
     logoText.setStyle(sf::Text::Bold);
-    logoText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green #00A651
+    logoText.setFillColor(Theme::GREEN_PRIMARY);
     logoText.setString("PakistanHub");
     logoText.setPosition(40.0f, 15.0f);
 
     // Status text
     statusText.setFont(font);
     statusText.setCharacterSize(13);
-    statusText.setFillColor(sf::Color(255, 255, 255, 140));
+    statusText.setFillColor(Theme::TEXT_MUTED);
     statusText.setPosition(200.0f, 22.0f);
 
     // Navigation buttons
-    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home");
-    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search");
-    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile");
-    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout");
+    navHome = std::make_unique<GlassButton>(sf::Vector2f(750.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Home", GlassButton::Type::NAV_DEFAULT);
+    navSearch = std::make_unique<GlassButton>(sf::Vector2f(860.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Search", GlassButton::Type::NAV_DEFAULT);
+    navProfile = std::make_unique<GlassButton>(sf::Vector2f(970.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Profile", GlassButton::Type::NAV_DEFAULT);
+    navLogout = std::make_unique<GlassButton>(sf::Vector2f(1080.0f, 12.0f), sf::Vector2f(100.0f, 36.0f), font, "Logout", GlassButton::Type::NAV_DEFAULT);
 
     // Nav accent line
     navAccentLine.setPosition(0.0f, 60.0f);
-    navAccentLine.setSize(sf::Vector2f(1280.0f, 2.0f));
-    navAccentLine.setFillColor(sf::Color(0, 166, 81, 100));
+    navAccentLine.setSize(sf::Vector2f(1280.0f, 1.0f));
+    navAccentLine.setFillColor(Theme::GLASS_BORDER);
 
     // Reply area background
     replyBackground.setPosition(100.0f, 630.0f);
@@ -102,8 +101,8 @@ void PostDetailScreen::reloadComments() {
 }
 
 void PostDetailScreen::draw(sf::RenderWindow& window) {
-    // 1. Draw header
-    window.draw(headerBackground);
+    // 1. Draw static Header
+    GlassPanel::draw(window, headerBackground.getGlobalBounds(), false, 1.0f);
     window.draw(logoText);
     window.draw(statusText);
     navHome->draw(window);
@@ -118,7 +117,7 @@ void PostDetailScreen::draw(sf::RenderWindow& window) {
     }
 
     // 3. Draw Reply area
-    window.draw(replyBackground);
+    GlassPanel::draw(window, replyBackground.getGlobalBounds(), false, 1.0f);
     replyInput->draw(window);
     replyButton->draw(window);
 

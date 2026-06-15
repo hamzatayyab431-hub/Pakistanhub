@@ -1,7 +1,7 @@
 #include "GlassPanel.h"
 #include "Theme.h"
 
-void GlassPanel::draw(sf::RenderWindow& window, const sf::FloatRect& bounds, bool glowing, float outlineThickness) {
+void GlassPanel::draw(sf::RenderWindow& window, const sf::FloatRect& bounds, bool glowing, float outlineThickness, sf::Color outlineColor) {
     if (glowing) {
         sf::RectangleShape glowRect(sf::Vector2f(bounds.width + 6.0f, bounds.height + 6.0f));
         glowRect.setPosition(bounds.left - 3.0f, bounds.top - 3.0f);
@@ -14,7 +14,7 @@ void GlassPanel::draw(sf::RenderWindow& window, const sf::FloatRect& bounds, boo
     fillRect.setFillColor(Theme::GLASS_FILL);
     
     if (outlineThickness > 0.0f) {
-        fillRect.setOutlineColor(Theme::GLASS_BORDER);
+        fillRect.setOutlineColor(outlineColor);
         fillRect.setOutlineThickness(outlineThickness);
     }
     window.draw(fillRect);

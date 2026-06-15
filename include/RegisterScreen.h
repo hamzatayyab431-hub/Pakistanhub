@@ -19,9 +19,16 @@ private:
     std::unique_ptr<TextInput> usernameInput;
     std::unique_ptr<TextInput> displayNameInput;
     std::unique_ptr<TextInput> passwordInput;
+    std::unique_ptr<TextInput> confirmPasswordInput;
     std::unique_ptr<GlassButton> registerButton;
     sf::Text backLink;
     sf::Text errorText;
+
+    // Password strength indicator
+    sf::RectangleShape strengthBarBg;
+    sf::RectangleShape strengthBarFill;
+
+    void updatePasswordStrength();
 
 public:
     RegisterScreen(sf::Font& fnt);
@@ -32,8 +39,11 @@ public:
     std::string getUsername() const;
     std::string getDisplayName() const;
     std::string getPassword() const;
+    std::string getConfirmPassword() const;
     void setErrorMessage(const std::string& error);
     void clearFields();
+
+    void update();
 
     bool isRegisterClicked(sf::Event& event, sf::RenderWindow& window);
     bool isBackLinkClicked(sf::Event& event, sf::RenderWindow& window);

@@ -1,4 +1,6 @@
 #include "CommentCard.h"
+#include "GlassPanel.h"
+#include "Theme.h"
 #include <sstream>
 #include <algorithm>
 
@@ -51,17 +53,17 @@ CommentCard::CommentCard(const Comment& cmt, sf::Font& fnt, const sf::Vector2f& 
     authorText.setFont(font);
     authorText.setCharacterSize(14);
     authorText.setStyle(sf::Text::Bold);
-    authorText.setFillColor(sf::Color(0, 166, 81)); // Pakistan Green for comment author
+    authorText.setFillColor(Theme::GREEN_PRIMARY); // Pakistan Green for comment author
     authorText.setString("@" + comment.getAuthorUsername());
 
     contentText.setFont(font);
     contentText.setCharacterSize(14);
-    contentText.setFillColor(sf::Color::White);
+    contentText.setFillColor(Theme::TEXT_PRIMARY);
     contentText.setString(wrapped);
 
     dateText.setFont(font);
     dateText.setCharacterSize(11);
-    dateText.setFillColor(sf::Color(255, 255, 255, 120));
+    dateText.setFillColor(Theme::TEXT_MUTED);
     dateText.setString(comment.getFormattedDate());
 
     // Update positions of text elements relative to position
@@ -74,14 +76,11 @@ void CommentCard::setPosition(const sf::Vector2f& pos) {
     // Background shapes
     backgroundRect.setPosition(position);
     backgroundRect.setSize(size);
-    backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // 30 alpha white
-    backgroundRect.setOutlineColor(sf::Color(255, 255, 255, 60)); // 60 alpha white
-    backgroundRect.setOutlineThickness(1.0f);
 
     // Green accent bar on left side
     accentBar.setPosition(position.x, position.y);
     accentBar.setSize(sf::Vector2f(3.0f, size.y));
-    accentBar.setFillColor(sf::Color(0, 166, 81, 100)); // Green at alpha 100
+    accentBar.setFillColor(Theme::GREEN_PRIMARY);
 
     // Text positions (shifted right for accent bar)
     authorText.setPosition(position.x + 28.0f, position.y + 12.0f);
@@ -97,13 +96,10 @@ void CommentCard::draw(sf::RenderWindow& window) {
     // Simple hover state check (on mouseover, slightly transition fill alpha)
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
-    if (backgroundRect.getGlobalBounds().contains(mousePos)) {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 50)); // Alpha 50 fill on hover
-    } else {
-        backgroundRect.setFillColor(sf::Color(255, 255, 255, 30)); // Default Alpha 30 fill
-    }
+    bool isHovered = backgroundRect.getGlobalBounds().contains(mousePos);
 
-    window.draw(backgroundRect);
+    GlassPanel::draw(window, backgroundRect.getGlobalBounds(), isHovered, 1.0f);
+
     window.draw(accentBar);
     window.draw(authorText);
     window.draw(dateText);
