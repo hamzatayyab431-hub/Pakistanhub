@@ -28,6 +28,10 @@ private:
 
     // Cover + avatar area
     sf::RectangleShape coverBg;
+    sf::Texture        coverTex;
+    sf::Sprite         coverSprite;
+    sf::Texture        avatarTex;
+    sf::CircleShape    avatarShape;
     sf::Text           nameText;
     sf::Text           handleText;
     sf::Text           bioText;
@@ -65,7 +69,7 @@ private:
     static constexpr float CX     = Theme::SIDEBAR_W;
     static constexpr float CW     = Theme::CENTER_W;
     static constexpr float COVER_H = 130.f;
-    static constexpr float HEADER_H = COVER_H + 90.f;  // cover + info below
+    static constexpr float HEADER_H = COVER_H + 140.f;  // cover + info below
     static constexpr float TAB_Y   = HEADER_H + 8.f;
     static constexpr float VP_Y    = TAB_Y + 36.f;
     static constexpr float VP_H    = 720.f - VP_Y;

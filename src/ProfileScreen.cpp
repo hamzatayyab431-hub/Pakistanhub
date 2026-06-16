@@ -15,6 +15,21 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
     coverBg.setSize(sf::Vector2f(CW, COVER_H));
     coverBg.setFillColor(Theme::BG_SURFACE);
 
+    if (coverTex.loadFromFile("assets/cover.png")) {
+        coverTex.setSmooth(true);
+        coverSprite.setTexture(coverTex);
+        sf::Vector2u size = coverTex.getSize();
+        coverSprite.setScale(CW / static_cast<float>(size.x), COVER_H / static_cast<float>(size.y));
+        coverSprite.setPosition(CX, 0.f);
+    }
+    if (avatarTex.loadFromFile("assets/avatar.png")) {
+        avatarTex.setSmooth(true);
+        avatarShape.setRadius(44.f);
+        avatarShape.setOrigin(44.f, 44.f);
+        avatarShape.setTexture(&avatarTex);
+        avatarShape.setPosition(CX + 56.f, COVER_H);
+    }
+
     auto makeText = [&](sf::Text& t, unsigned int sz, sf::Color col, bool bold = false) {
         t.setFont(font); t.setCharacterSize(sz); t.setFillColor(col);
         if (bold) t.setStyle(sf::Text::Bold);
@@ -36,10 +51,10 @@ ProfileScreen::ProfileScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
         font, "Save");
 
     cityEditInput = std::make_unique<TextInput>(
-        sf::Vector2f(CX + 16.f, COVER_H + 54.f), sf::Vector2f(200.f, 28.f),
+        sf::Vector2f(CX + 16.f, COVER_H + 103.f), sf::Vector2f(200.f, 28.f),
         font, "City...");
     bioEditInput  = std::make_unique<TextInput>(
-        sf::Vector2f(CX + 16.f, COVER_H + 86.f), sf::Vector2f(400.f, 28.f),
+        sf::Vector2f(CX + 16.f, COVER_H + 83.f), sf::Vector2f(400.f, 28.f),
         font, "Bio...");
 
     // Tabs: Posts / Replies / Media
@@ -105,7 +120,12 @@ void ProfileScreen::reloadProfile() {
     nameText.setString(targetUser->getDisplayName());
     handleText.setString("@" + targetUser->getUsername());
     bioText.setString(targetUser->getBio().empty() ? "" : targetUser->getBio());
-    cityText.setString(targetUser->getCity().empty() ? "" : "📍 " + targetUser->getCity());
+    if (targetUser->getCity().empty()) {
+        cityText.setString("");
+    } else {
+        std::string s = "Location: " + targetUser->getCity();
+        cityText.setString(sf::String::fromUtf8(s.begin(), s.end()));
+    }
 
     int friends = static_cast<int>(socialGraph.getFriends(targetUser->getUsername()).size());
     statsText.setString(
@@ -157,36 +177,57 @@ void ProfileScreen::draw(sf::RenderWindow& window) {
     window.draw(centerBg);
 
     // Cover gradient
-    sf::VertexArray cover(sf::Quads, 4);
-    cover[0].position = {CX, 0.f};            cover[0].color = Theme::BG_SURFACE;
-    cover[1].position = {CX + CW, 0.f};       cover[1].color = Theme::BG_SURFACE;
-    cover[2].position = {CX + CW, COVER_H};   cover[2].color = Theme::BG_SECONDARY;
-    cover[3].position = {CX, COVER_H};        cover[3].color = Theme::BG_SECONDARY;
-    window.draw(cover);
+    if (coverTex.getSize().x > 0) {
+        window.draw(coverSprite);
+    } else {
+        sf::VertexArray cover(sf::Quads, 4);
+        cover[0].position = {CX, 0.f};            cover[0].color = Theme::BG_SURFACE;
+        cover[1].position = {CX + CW, 0.f};       cover[1].color = Theme::BG_SURFACE;
+        cover[2].position = {CX + CW, COVER_H};   cover[2].color = Theme::BG_SECONDARY;
+        cover[3].position = {CX, COVER_H};        cover[3].color = Theme::BG_SECONDARY;
+        window.draw(cover);
+    }
 
-    // Avatar — 50px radius, overlaps cover
+    // Avatar — overlaps cover
     bool isSelf = currentUser && targetUser &&
                   currentUser->getUsername() == targetUser->getUsername();
     if (targetUser && !targetUser->getDisplayName().empty()) {
-        DrawUtils::drawAvatar(window, sf::Vector2f(CX + 56.f, COVER_H + 10.f),
-            44.f, targetUser->getDisplayName()[0], font, 32);
+        if (avatarTex.getSize().x > 0) {
+            sf::CircleShape avatarBorder(47.f);
+            avatarBorder.setOrigin(47.f, 47.f);
+            avatarBorder.setPosition(CX + 56.f, COVER_H);
+            avatarBorder.setFillColor(Theme::BG_PRIMARY);
+            window.draw(avatarBorder);
+
+            sf::CircleShape avatarGreen(45.f);
+            avatarGreen.setOrigin(45.f, 45.f);
+            avatarGreen.setPosition(CX + 56.f, COVER_H);
+            avatarGreen.setFillColor(Theme::GREEN);
+            window.draw(avatarGreen);
+
+            window.draw(avatarShape);
+        } else {
+            DrawUtils::drawAvatar(window, sf::Vector2f(CX + 56.f, COVER_H),
+                44.f, targetUser->getDisplayName()[0], font, 32);
+        }
     }
 
     // Profile info
-    nameText.setPosition(CX + 16.f, COVER_H + 28.f);
+    float infoStartY = COVER_H + 55.f;
+    nameText.setPosition(CX + 16.f, infoStartY);
     window.draw(nameText);
 
     float nw = nameText.getGlobalBounds().width;
-    handleText.setPosition(CX + 16.f + nw + 8.f, COVER_H + 32.f);
+    handleText.setPosition(CX + 16.f + nw + 8.f, infoStartY + 4.f);
     window.draw(handleText);
 
-    bioText.setPosition(CX + 16.f, COVER_H + 54.f);
+    bioText.setPosition(CX + 16.f, infoStartY + 28.f);
     window.draw(bioText);
 
-    cityText.setPosition(CX + 16.f, COVER_H + 72.f);
+    cityText.setPosition(CX + 16.f, infoStartY + 48.f);
     window.draw(cityText);
 
-    statsText.setPosition(CX + 16.f, COVER_H + 90.f);
+    statsText.setPosition(CX + 16.f, infoStartY + 70.f);
     window.draw(statsText);
 
     if (isEditingProfile && isSelf) {

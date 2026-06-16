@@ -124,8 +124,8 @@ void PostCard::setPosition(const sf::Vector2f& pos) {
 }
 
 void PostCard::refreshLikeLabel() {
-    likeText.setString((isLiked ? "♥ " : "♡ ") +
-        std::to_string(post.getLikeCount()));
+    std::string s = (isLiked ? "♥ " : "♡ ") + std::to_string(post.getLikeCount());
+    likeText.setString(sf::String::fromUtf8(s.begin(), s.end()));
 }
 
 void PostCard::toggleLikeState() {

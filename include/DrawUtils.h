@@ -22,66 +22,45 @@ inline void drawRoundRect(sf::RenderTarget& target,
         sf::RectangleShape r(sf::Vector2f(rect.width, rect.height));
         r.setPosition(rect.left, rect.top);
         r.setFillColor(fill);
-        if (borderThick > 0.f) { r.setOutlineColor(border); r.setOutlineThickness(borderThick); }
+        if (borderThick > 0.f) { r.setOutlineColor(border); r.setOutlineThickness(-borderThick); }
         target.draw(r);
         return;
     }
     float x = rect.left, y = rect.top, w = rect.width, h = rect.height;
 
-    sf::RectangleShape centre(sf::Vector2f(w, h - radius * 2.f));
-    centre.setPosition(x, y + radius); centre.setFillColor(fill); target.draw(centre);
-    sf::RectangleShape top(sf::Vector2f(w - radius * 2.f, radius));
-    top.setPosition(x + radius, y); top.setFillColor(fill); target.draw(top);
-    sf::RectangleShape bottom(sf::Vector2f(w - radius * 2.f, radius));
-    bottom.setPosition(x + radius, y + h - radius); bottom.setFillColor(fill); target.draw(bottom);
+    const unsigned int cornerPoints = 15;
+    sf::ConvexShape shape(cornerPoints * 4);
 
-    struct Corner { float cx, cy; };
-    Corner corners[4] = {
-        { x + radius, y + radius }, { x + w - radius, y + radius },
-        { x + w - radius, y + h - radius }, { x + radius, y + h - radius }
-    };
-    for (auto& c : corners) {
-        sf::CircleShape circle(radius);
-        circle.setOrigin(radius, radius);
-        circle.setPosition(c.cx, c.cy);
-        circle.setFillColor(fill);
-        target.draw(circle);
+    sf::Vector2f cTopLeft(x + radius, y + radius);
+    sf::Vector2f cTopRight(x + w - radius, y + radius);
+    sf::Vector2f cBotRight(x + w - radius, y + h - radius);
+    sf::Vector2f cBotLeft(x + radius, y + h - radius);
+
+    unsigned int ptIdx = 0;
+
+    for (unsigned int i = 0; i < cornerPoints; ++i) {
+        float angle = M_PI + (M_PI / 2.f) * (static_cast<float>(i) / (cornerPoints - 1));
+        shape.setPoint(ptIdx++, sf::Vector2f(cTopLeft.x + std::cos(angle) * radius, cTopLeft.y + std::sin(angle) * radius));
+    }
+    for (unsigned int i = 0; i < cornerPoints; ++i) {
+        float angle = 1.5f * M_PI + (M_PI / 2.f) * (static_cast<float>(i) / (cornerPoints - 1));
+        shape.setPoint(ptIdx++, sf::Vector2f(cTopRight.x + std::cos(angle) * radius, cTopRight.y + std::sin(angle) * radius));
+    }
+    for (unsigned int i = 0; i < cornerPoints; ++i) {
+        float angle = 0.f + (M_PI / 2.f) * (static_cast<float>(i) / (cornerPoints - 1));
+        shape.setPoint(ptIdx++, sf::Vector2f(cBotRight.x + std::cos(angle) * radius, cBotRight.y + std::sin(angle) * radius));
+    }
+    for (unsigned int i = 0; i < cornerPoints; ++i) {
+        float angle = M_PI / 2.f + (M_PI / 2.f) * (static_cast<float>(i) / (cornerPoints - 1));
+        shape.setPoint(ptIdx++, sf::Vector2f(cBotLeft.x + std::cos(angle) * radius, cBotLeft.y + std::sin(angle) * radius));
     }
 
+    shape.setFillColor(fill);
     if (borderThick > 0.f && border.a > 0) {
-        // Draw border as thin filled rects along all four edges.
-        // For the straight portions:
-        sf::RectangleShape bTop(sf::Vector2f(w - radius * 2.f, borderThick));
-        bTop.setPosition(x + radius, y); bTop.setFillColor(border); target.draw(bTop);
-        sf::RectangleShape bBot(sf::Vector2f(w - radius * 2.f, borderThick));
-        bBot.setPosition(x + radius, y + h - borderThick); bBot.setFillColor(border); target.draw(bBot);
-        sf::RectangleShape bLeft(sf::Vector2f(borderThick, h - radius * 2.f));
-        bLeft.setPosition(x, y + radius); bLeft.setFillColor(border); target.draw(bLeft);
-        sf::RectangleShape bRight(sf::Vector2f(borderThick, h - radius * 2.f));
-        bRight.setPosition(x + w - borderThick, y + radius); bRight.setFillColor(border); target.draw(bRight);
-
-        // For corners: draw a border-coloured circle, then overdraw with a slightly
-        // smaller fill-coloured circle so only a thin ring of the border colour shows.
-        // This avoids the transparent-fill circle artefact completely.
-        for (auto& c : corners) {
-            // Outer ring in border colour
-            sf::CircleShape outerRing(radius);
-            outerRing.setOrigin(radius, radius);
-            outerRing.setPosition(c.cx, c.cy);
-            outerRing.setFillColor(border);
-            target.draw(outerRing);
-
-            // Inner circle in fill colour (masks all but the outer borderThick strip)
-            float innerR = radius - borderThick;
-            if (innerR > 0.f) {
-                sf::CircleShape innerCircle(innerR);
-                innerCircle.setOrigin(innerR, innerR);
-                innerCircle.setPosition(c.cx, c.cy);
-                innerCircle.setFillColor(fill);
-                target.draw(innerCircle);
-            }
-        }
+        shape.setOutlineColor(border);
+        shape.setOutlineThickness(-borderThick);
     }
+    target.draw(shape);
 }
 
 // ─── drawCard ─────────────────────────────────────────────────────────────────
