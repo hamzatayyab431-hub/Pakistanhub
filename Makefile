@@ -4,7 +4,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
 LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system
 
 # Source and Object Files
-SRCS = src/User.cpp src/UserManager.cpp src/Post.cpp src/PostManager.cpp src/Feed.cpp src/SocialGraph.cpp src/Comment.cpp src/CommentManager.cpp src/UIComponent.cpp src/TextInput.cpp src/GlassButton.cpp src/GlassPanel.cpp src/ToastManager.cpp src/LoginScreen.cpp src/RegisterScreen.cpp src/PostCard.cpp src/CommentCard.cpp src/FeedScreen.cpp src/ProfileScreen.cpp src/PostDetailScreen.cpp src/SearchScreen.cpp src/App.cpp src/main.cpp
+SRCS = src/User.cpp src/UserManager.cpp src/Post.cpp src/PostManager.cpp src/Feed.cpp src/SocialGraph.cpp src/Comment.cpp src/CommentManager.cpp src/UIComponent.cpp src/TextInput.cpp src/GlassButton.cpp src/GlassPanel.cpp src/ToastManager.cpp src/Sidebar.cpp src/RightPanel.cpp src/LoginScreen.cpp src/RegisterScreen.cpp src/PostCard.cpp src/CommentCard.cpp src/FeedScreen.cpp src/ProfileScreen.cpp src/PostDetailScreen.cpp src/SearchScreen.cpp src/App.cpp src/main.cpp
 OBJS = $(SRCS:.cpp=.o)
 TARGET = PakistanHub.exe
 

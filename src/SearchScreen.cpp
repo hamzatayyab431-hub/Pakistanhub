@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <cctype>
 
-static bool containsIgnoreCase(const std::string& str, const std::string& q) {
+static bool ciContains(const std::string& str, const std::string& q) {
     if (q.empty()) return true;
     auto it = std::search(str.begin(), str.end(), q.begin(), q.end(),
-        [](char a, char b) { return std::tolower(a) == std::tolower(b); });
+        [](char a, char b){ return std::tolower(a)==std::tolower(b); });
     return it != str.end();
 }
 
@@ -15,55 +15,48 @@ static bool containsIgnoreCase(const std::string& str, const std::string& q) {
 
 SearchResultCard::SearchResultCard(User* usr, sf::Font& fnt,
                                    const sf::Vector2f& pos, const sf::Vector2f& sz)
-    : user(usr), font(fnt), position(pos), size(sz), isHovered(false)
+    : user(usr), font(fnt), position(pos), size(sz)
 {
     backgroundRect.setPosition(pos);
     backgroundRect.setSize(sz);
-
-    accentBar.setPosition(pos.x, pos.y);
-    accentBar.setSize(sf::Vector2f(3.f, sz.y));
-    accentBar.setFillColor(Theme::GREEN);
+    hoverFill.speed = 12.f;
+    hoverFill.snap(0.f);
 
     displayNameText.setFont(font);
-    displayNameText.setCharacterSize(15);
+    displayNameText.setCharacterSize(14);
     displayNameText.setStyle(sf::Text::Bold);
     displayNameText.setFillColor(Theme::TEXT_WHITE);
     displayNameText.setString(user->getDisplayName());
-    displayNameText.setPosition(pos.x + 68.f, pos.y + 12.f);
+    displayNameText.setPosition(pos.x + 56.f, pos.y + 10.f);
 
     usernameText.setFont(font);
-    usernameText.setCharacterSize(13);
-    usernameText.setFillColor(Theme::TEXT_MUTED);
+    usernameText.setCharacterSize(12);
+    usernameText.setFillColor(Theme::TEXT_DIM);
     usernameText.setString("@" + user->getUsername());
     float nw = displayNameText.getGlobalBounds().width;
-    usernameText.setPosition(pos.x + 68.f + nw + 8.f, pos.y + 14.f);
+    usernameText.setPosition(pos.x + 56.f + nw + 6.f, pos.y + 12.f);
 
     statsText.setFont(font);
     statsText.setCharacterSize(12);
     statsText.setFillColor(Theme::TEXT_DIM);
     statsText.setString(std::to_string(user->getFollowerCount()) + " followers");
     sf::FloatRect sb = statsText.getLocalBounds();
-    statsText.setPosition(pos.x + sz.x - sb.width - 16.f, pos.y + 14.f);
+    statsText.setPosition(pos.x + sz.x - sb.width - 16.f, pos.y + 12.f);
 
-    hoverFill.speed = 10.f;
-    hoverFill.snap(0.f);
-
-    // Avatar center: 28px radius
-    avatarCenter = sf::Vector2f(pos.x + 8.f + 20.f, pos.y + sz.y / 2.f);
+    avatarCenter = sf::Vector2f(pos.x + 8.f + 18.f, pos.y + sz.y / 2.f);
 }
 
 void SearchResultCard::draw(sf::RenderWindow& window) {
-    sf::Uint8 fillA = static_cast<sf::Uint8>(12 + hoverFill.current * 8.f);
-    sf::Color fill(255, 255, 255, fillA);
-    DrawUtils::drawGlassPanel(window,
-        sf::FloatRect(position.x, position.y, size.x, size.y), 4.f, fill);
+    sf::Uint8 ha = static_cast<sf::Uint8>(hoverFill.current * 2.f);
+    sf::Color fill(255, 255, 255, ha);
+    DrawUtils::drawRoundRect(window,
+        sf::FloatRect(position.x, position.y, size.x, size.y),
+        0.f, fill);
+    DrawUtils::drawDivider(window, position.x, position.y + size.y - 1.f, size.x);
 
-    window.draw(accentBar);
-
-    if (!user->getDisplayName().empty()) {
-        DrawUtils::drawAvatar(window, avatarCenter, 20.f,
-            user->getDisplayName()[0], font, 16);
-    }
+    if (!user->getDisplayName().empty())
+        DrawUtils::drawAvatar(window, avatarCenter, 18.f,
+            user->getDisplayName()[0], font, 14);
 
     window.draw(displayNameText);
     window.draw(usernameText);
@@ -76,7 +69,7 @@ void SearchResultCard::handleEvent(sf::Event& event) {
                         static_cast<float>(event.mouseMove.y));
         bool prev = isHovered;
         isHovered = backgroundRect.getGlobalBounds().contains(mp);
-        if (isHovered != prev) hoverFill.setTarget(isHovered ? 2.f : 0.f);
+        if (isHovered != prev) hoverFill.setTarget(isHovered ? 30.f : 0.f);
     }
 }
 
@@ -98,37 +91,39 @@ std::string SearchResultCard::getUsername() const { return user->getUsername(); 
 
 SearchScreen::SearchScreen(sf::Font& fnt, UserManager& um,
                            PostManager& pm, SocialGraph& sg)
-    : font(fnt), userManager(um), postManager(pm), socialGraph(sg),
-      currentUser(nullptr), scrollOffset(0.f), targetScrollOffset(0.f),
-      maxScrollOffset(0.f), clickedHandle("")
+    : font(fnt), userManager(um), postManager(pm), socialGraph(sg)
 {
-    nav.init(font, NavActive::SEARCH, "");
+    sidebar.init(font, SidebarItem::EXPLORE, "", "");
+
+    exploreTitle.setFont(font);
+    exploreTitle.setCharacterSize(20);
+    exploreTitle.setStyle(sf::Text::Bold);
+    exploreTitle.setFillColor(Theme::TEXT_WHITE);
+    exploreTitle.setString("Explore");
+    exploreTitle.setPosition(CX + 16.f, 8.f);
 
     searchInput = std::make_unique<TextInput>(
-        sf::Vector2f(100.f, 72.f), sf::Vector2f(1080.f, 50.f),
-        font, "Search by name or handle...");
+        sf::Vector2f(CX + 8.f, 38.f), sf::Vector2f(CW - 16.f, 46.f),
+        font, "Search PakistanHub...");
 
-    // Magnifier icon will be drawn manually in draw()
-
-    // No-results text
     noResultText.setFont(font);
     noResultText.setCharacterSize(16);
-    noResultText.setFillColor(Theme::TEXT_MUTED);
+    noResultText.setFillColor(Theme::TEXT_DIM);
     noResultText.setString("No users found");
     sf::FloatRect nb = noResultText.getLocalBounds();
     noResultText.setOrigin(nb.left + nb.width / 2.f, 0.f);
-    noResultText.setPosition(540.f, 60.f);
+    noResultText.setPosition(CW / 2.f, 60.f);
 
-    // Viewport: x[100,1180], y[132,695]
-    resultsViewport.setSize(1080.f, 563.f);
-    resultsViewport.setViewport(sf::FloatRect(100.f / 1280.f, 132.f / 720.f,
-                                              1080.f / 1280.f, 563.f / 720.f));
-    resultsViewport.setCenter(540.f, 281.5f);
+    resultsViewport.setSize(sf::Vector2f(CW, VP_H));
+    resultsViewport.setViewport(sf::FloatRect(CX / 1280.f, VP_Y / 720.f,
+                                              CW / 1280.f, VP_H / 720.f));
+    resultsViewport.setCenter(CW / 2.f, VP_H / 2.f);
 }
 
 void SearchScreen::setCurrentUser(User* user) {
     currentUser = user;
-    if (currentUser) nav.setUsername(currentUser->getUsername());
+    if (currentUser)
+        sidebar.setUsername(currentUser->getUsername(), currentUser->getDisplayName());
 }
 
 void SearchScreen::reloadSearch() {
@@ -142,55 +137,62 @@ void SearchScreen::updateResults() {
     resultCards.clear();
     scrollOffset = 0.f;
     targetScrollOffset = 0.f;
-    resultsViewport.setCenter(540.f, 281.5f);
+    resultsViewport.setCenter(CW / 2.f, VP_H / 2.f);
 
     const auto& allUsers = userManager.getUsers();
-    float y = 10.f;
+    float y = 0.f;
     for (const auto& usr : allUsers) {
         if (currentUser && usr.getUsername() == currentUser->getUsername()) continue;
-        if (containsIgnoreCase(usr.getUsername(),   currentQuery) ||
-            containsIgnoreCase(usr.getDisplayName(), currentQuery)) {
+        if (ciContains(usr.getUsername(), currentQuery) ||
+            ciContains(usr.getDisplayName(), currentQuery)) {
             User* uptr = userManager.findUser(usr.getUsername());
             if (!uptr) continue;
             auto card = std::make_unique<SearchResultCard>(
-                uptr, font, sf::Vector2f(0.f, y), sf::Vector2f(1080.f, 72.f));
-            y += card->getHeight() + 10.f;
+                uptr, font, sf::Vector2f(0.f, y), sf::Vector2f(CW, 56.f));
+            y += card->getHeight();
             resultCards.push_back(std::move(card));
         }
     }
-    maxScrollOffset = std::max(0.f, y - 563.f);
+    maxScrollOffset = std::max(0.f, y - VP_H);
 }
 
 void SearchScreen::draw(sf::RenderWindow& window) {
-    nav.draw(window);
+    sidebar.draw(window);
+
+    // Center bg
+    sf::RectangleShape centerBg(sf::Vector2f(CW, 720.f));
+    centerBg.setPosition(CX, 0.f);
+    centerBg.setFillColor(Theme::BG_PRIMARY);
+    window.draw(centerBg);
+
+    window.draw(exploreTitle);
     searchInput->draw(window);
 
-    // Magnifier icon (manual draw)
+    // Magnifier
     sf::Color iconCol = searchInput->getFocus() ? Theme::GREEN : Theme::TEXT_DIM;
-    sf::CircleShape magnCircle(8.f);
-    magnCircle.setPosition(110.f, 82.f);
-    magnCircle.setFillColor(sf::Color::Transparent);
-    magnCircle.setOutlineColor(iconCol);
-    magnCircle.setOutlineThickness(1.5f);
-    window.draw(magnCircle);
-    sf::RectangleShape magnHandle(sf::Vector2f(10.f, 1.5f));
-    magnHandle.setRotation(45.f);
-    magnHandle.setPosition(122.f, 97.f);
-    magnHandle.setFillColor(iconCol);
-    window.draw(magnHandle);
+    sf::CircleShape mag(9.f);
+    mag.setPosition(CX + 14.f, 46.f);
+    mag.setFillColor(sf::Color::Transparent);
+    mag.setOutlineColor(iconCol);
+    mag.setOutlineThickness(1.5f);
+    window.draw(mag);
+    sf::RectangleShape magHandle(sf::Vector2f(10.f, 1.5f));
+    magHandle.setRotation(45.f);
+    magHandle.setPosition(CX + 26.f, 62.f);
+    magHandle.setFillColor(iconCol);
+    window.draw(magHandle);
+
+    DrawUtils::drawDivider(window, CX, VP_Y - 1.f, CW);
 
     sf::View orig = window.getView();
     window.setView(resultsViewport);
-    if (resultCards.empty()) {
-        window.draw(noResultText);
-    } else {
-        for (const auto& card : resultCards) card->draw(window);
-    }
+    if (resultCards.empty()) window.draw(noResultText);
+    else for (const auto& card : resultCards) card->draw(window);
     window.setView(orig);
 }
 
 void SearchScreen::handleEvent(sf::Event& event) {
-    nav.handleEvent(event);
+    sidebar.handleEvent(event);
     searchInput->handleEvent(event);
 
     if (searchInput->getText() != currentQuery) {
@@ -209,12 +211,12 @@ void SearchScreen::handleEvent(sf::Event& event) {
     bool hasMouse = false;
     if (event.type == sf::Event::MouseButtonPressed ||
         event.type == sf::Event::MouseButtonReleased) {
-        me.mouseButton.x = static_cast<int>(event.mouseButton.x - 100.f);
-        me.mouseButton.y = static_cast<int>((event.mouseButton.y - 132.f) + scrollOffset);
+        me.mouseButton.x = static_cast<int>(event.mouseButton.x - CX);
+        me.mouseButton.y = static_cast<int>((event.mouseButton.y - VP_Y) + scrollOffset);
         hasMouse = true;
     } else if (event.type == sf::Event::MouseMoved) {
-        me.mouseMove.x = static_cast<int>(event.mouseMove.x - 100.f);
-        me.mouseMove.y = static_cast<int>((event.mouseMove.y - 132.f) + scrollOffset);
+        me.mouseMove.x = static_cast<int>(event.mouseMove.x - CX);
+        me.mouseMove.y = static_cast<int>((event.mouseMove.y - VP_Y) + scrollOffset);
         hasMouse = true;
     }
 
@@ -225,25 +227,17 @@ void SearchScreen::handleEvent(sf::Event& event) {
 }
 
 void SearchScreen::update(float dt) {
-    nav.update(dt);
+    sidebar.update(dt);
     searchInput->update(dt);
 
     float lerpF = std::min(1.f, 12.f * dt);
     if (std::abs(targetScrollOffset - scrollOffset) > 0.05f)
         scrollOffset += (targetScrollOffset - scrollOffset) * lerpF;
-    else
-        scrollOffset = targetScrollOffset;
-    resultsViewport.setCenter(540.f, 281.5f + scrollOffset);
+    else scrollOffset = targetScrollOffset;
+    resultsViewport.setCenter(CW / 2.f, VP_H / 2.f + scrollOffset);
 
     for (auto& card : resultCards) card->update(dt);
 }
 
-void SearchScreen::update() { update(0.016f); }
-
 std::string SearchScreen::getClickedHandle()   { return clickedHandle; }
 void        SearchScreen::clearClickedHandle() { clickedHandle = ""; }
-
-bool SearchScreen::isHomeClicked(sf::Event& e)    { return nav.homeClicked(e); }
-bool SearchScreen::isSearchClicked(sf::Event& e)  { return nav.searchClicked(e); }
-bool SearchScreen::isProfileClicked(sf::Event& e) { return nav.profileClicked(e); }
-bool SearchScreen::isLogoutClicked(sf::Event& e)  { return nav.logoutClicked(e); }

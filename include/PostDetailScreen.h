@@ -10,7 +10,7 @@
 #include "UserManager.h"
 #include "CommentManager.h"
 #include "SocialGraph.h"
-#include "NavBar.h"
+#include "Sidebar.h"
 #include <memory>
 #include <vector>
 
@@ -21,18 +21,18 @@ private:
     PostManager&    postManager;
     CommentManager& commentManager;
     SocialGraph&    socialGraph;
-    User*           currentUser;
+    User*           currentUser = nullptr;
     Post            targetPost;
-    bool            targetPostLiked;
+    bool            targetPostLiked = false;
 
-    NavBar nav;
+    Sidebar sidebar;
 
     std::unique_ptr<PostCard> postCard;
 
     sf::View commentViewport;
-    float    scrollOffset;
-    float    targetScrollOffset;
-    float    maxScrollOffset;
+    float    scrollOffset      = 0.f;
+    float    targetScrollOffset = 0.f;
+    float    maxScrollOffset   = 0.f;
 
     std::vector<std::unique_ptr<CommentCard>> commentCards;
 
@@ -40,23 +40,26 @@ private:
     std::unique_ptr<TextInput>   replyInput;
     std::unique_ptr<GlassButton> replyButton;
 
+    static constexpr float CX     = Theme::SIDEBAR_W;
+    static constexpr float CW     = Theme::CENTER_W;
+
 public:
     PostDetailScreen(sf::Font& fnt, UserManager& um, PostManager& pm,
                      CommentManager& cm, SocialGraph& sg);
 
     void draw(sf::RenderWindow& window) override;
     void handleEvent(sf::Event& event) override;
-    void update() override;
+    void update() override { update(0.016f); }
     void update(float dt);
 
     void setTargetPost(const Post& post, bool liked);
     void setCurrentUser(User* user);
     void reloadComments();
 
-    bool isHomeClicked(sf::Event& event);
-    bool isSearchClicked(sf::Event& event);
-    bool isProfileClicked(sf::Event& event);
-    bool isLogoutClicked(sf::Event& event);
+    bool isHomeClicked(sf::Event& e)    { return sidebar.isClicked(e, SidebarItem::HOME); }
+    bool isSearchClicked(sf::Event& e)  { return sidebar.isClicked(e, SidebarItem::EXPLORE); }
+    bool isProfileClicked(sf::Event& e) { return sidebar.isClicked(e, SidebarItem::PROFILE); }
+    bool isLogoutClicked(sf::Event& e)  { return sidebar.isClicked(e, SidebarItem::LOGOUT); }
 };
 
 #endif // POSTDETAILSCREEN_H

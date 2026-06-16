@@ -29,7 +29,7 @@ private:
     PostManager    postManager;
     SocialGraph    socialGraph;
     CommentManager commentManager;
-    User* currentUser;
+    User* currentUser = nullptr;
 
     std::unique_ptr<LoginScreen>      loginScreen;
     std::unique_ptr<RegisterScreen>   registerScreen;
@@ -38,18 +38,13 @@ private:
     std::unique_ptr<PostDetailScreen> postDetailScreen;
     std::unique_ptr<SearchScreen>     searchScreen;
 
-    // Background
     sf::VertexArray backgroundGradient;
-    sf::CircleShape glowTopLeft;
-    sf::CircleShape glowBottomRight;
-    sf::CircleShape glowCenter;
     sf::Clock       appClock;
     sf::Clock       frameClock;
 
-    // Screen transitions
     AppState nextState;
-    bool     isTransitioning;
-    float    transitionAlpha;
+    bool     isTransitioning  = false;
+    float    transitionAlpha  = 0.f;
     sf::RectangleShape transitionOverlay;
 
     void processEvents();

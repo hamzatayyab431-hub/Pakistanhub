@@ -11,22 +11,32 @@ class LoginScreen : public UIComponent {
 private:
     sf::Font& font;
 
-    sf::RectangleShape cardBackground;
+    // Right card
+    sf::RectangleShape cardBg;
     sf::Text           titleText;
     sf::Text           subtitleText;
-
-    std::unique_ptr<TextInput>    usernameInput;
-    std::unique_ptr<TextInput>    passwordInput;
-    std::unique_ptr<GlassButton>  loginButton;
-
+    std::unique_ptr<TextInput>   usernameInput;
+    std::unique_ptr<TextInput>   passwordInput;
+    std::unique_ptr<GlassButton> loginButton;
+    std::unique_ptr<GlassButton> createAccountBtn;
+    sf::Text           orText;
     sf::Text           registerLink;
     sf::Text           registerLinkHighlight;
     sf::RectangleShape registerUnderline;
-    bool               registerHovered;
-
+    bool               registerHovered = false;
     sf::Text           errorText;
     float              errorAlpha;
     Lerp               errorAlphaLerp;
+
+    // Left branding panel
+    sf::RectangleShape leftBg;
+    sf::Text           brandLogo;
+    sf::Text           brandTagline;
+    sf::Text           brandDesc;
+    sf::Text           bulletTitle[3];
+    sf::Text           bulletDesc[3];
+    sf::CircleShape    bulletDot[3];
+    sf::Text           copyrightText;
 
 public:
     LoginScreen(sf::Font& fnt);
