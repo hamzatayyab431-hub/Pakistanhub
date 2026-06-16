@@ -1,6 +1,6 @@
 # PakistanHub 🇵🇰
 
-![PakistanHub](assets/cover.png)
+
 *A high-performance, fully graphical social media desktop application built from scratch in C++ using SFML.*
 
 PakistanHub is an interactive, localized social network clone offering a modern user experience with **glassmorphism** design principles, smooth animations, and a rich dark-mode interface. Built entirely as an Object-Oriented C++ application, it brings web-like UI aesthetics to a native desktop environment.
