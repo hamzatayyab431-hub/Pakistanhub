@@ -49,6 +49,8 @@ inline void drawRoundRect(sf::RenderTarget& target,
     }
 
     if (borderThick > 0.f && border.a > 0) {
+        // Draw border as thin filled rects along all four edges.
+        // For the straight portions:
         sf::RectangleShape bTop(sf::Vector2f(w - radius * 2.f, borderThick));
         bTop.setPosition(x + radius, y); bTop.setFillColor(border); target.draw(bTop);
         sf::RectangleShape bBot(sf::Vector2f(w - radius * 2.f, borderThick));
@@ -57,14 +59,27 @@ inline void drawRoundRect(sf::RenderTarget& target,
         bLeft.setPosition(x, y + radius); bLeft.setFillColor(border); target.draw(bLeft);
         sf::RectangleShape bRight(sf::Vector2f(borderThick, h - radius * 2.f));
         bRight.setPosition(x + w - borderThick, y + radius); bRight.setFillColor(border); target.draw(bRight);
+
+        // For corners: draw a border-coloured circle, then overdraw with a slightly
+        // smaller fill-coloured circle so only a thin ring of the border colour shows.
+        // This avoids the transparent-fill circle artefact completely.
         for (auto& c : corners) {
-            sf::CircleShape arcFill(radius);
-            arcFill.setOrigin(radius, radius);
-            arcFill.setPosition(c.cx, c.cy);
-            arcFill.setFillColor(sf::Color::Transparent);
-            arcFill.setOutlineColor(border);
-            arcFill.setOutlineThickness(borderThick);
-            target.draw(arcFill);
+            // Outer ring in border colour
+            sf::CircleShape outerRing(radius);
+            outerRing.setOrigin(radius, radius);
+            outerRing.setPosition(c.cx, c.cy);
+            outerRing.setFillColor(border);
+            target.draw(outerRing);
+
+            // Inner circle in fill colour (masks all but the outer borderThick strip)
+            float innerR = radius - borderThick;
+            if (innerR > 0.f) {
+                sf::CircleShape innerCircle(innerR);
+                innerCircle.setOrigin(innerR, innerR);
+                innerCircle.setPosition(c.cx, c.cy);
+                innerCircle.setFillColor(fill);
+                target.draw(innerCircle);
+            }
         }
     }
 }
