@@ -1,83 +1,82 @@
 # PakistanHub 🇵🇰
 
-A feature-rich social media desktop application built with **C++ (OOP)** and **SFML**, styled with a **glassmorphism** design language using green and white accents — inspired by Pakistan's national colors.
+![PakistanHub](assets/cover.png)
+*A high-performance, fully graphical social media desktop application built from scratch in C++ using SFML.*
+
+PakistanHub is an interactive, localized social network clone offering a modern user experience with **glassmorphism** design principles, smooth animations, and a rich dark-mode interface. Built entirely as an Object-Oriented C++ application, it brings web-like UI aesthetics to a native desktop environment.
 
 ---
 
-## 📌 Project Overview
+## ✨ Features
 
-PakistanHub is a local social media clone where users can register, post, follow others, and interact through a fully graphical SFML-powered interface. All data is persisted to local files. The codebase is structured using core Object-Oriented Programming principles: encapsulation, inheritance, polymorphism, and abstraction.
+- **Modern UI/UX:** Stunning "glassmorphism" panels, frosted glass overlays, custom rounded-corner rendering, and dynamic hover animations.
+- **Complete User System:** Register, login, and customize your profile (Bio, City, and beautiful Avatar & Cover integrations).
+- **Social Graph:** Follow/unfollow users and see follower/following counts update in real-time.
+- **Interactive Feed:** Create posts, like posts, and view a timeline populated by the people you follow.
+- **Engagement:** Full commenting system on individual posts.
+- **Data Persistence:** All users, posts, comments, and social graphs are saved locally via structured File I/O.
+- **Search & Explore:** Discover other users on the platform.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-| Layer | Technology |
+| Component | Technology / Concept |
 |---|---|
-| Language | C++17 |
-| Graphics | SFML 2.5+ |
-| Paradigm | Object-Oriented Programming |
-| Persistence | File I/O (CSV / plaintext) |
-| Build | g++ / Makefile |
+| **Core Language** | `C++17` |
+| **Graphics Engine** | `SFML 2.5+` (Simple and Fast Multimedia Library) |
+| **Architecture** | Object-Oriented Programming (Polymorphism, Inheritance, Encapsulation) |
+| **Data Storage** | Local File System (Text/CSV based) |
+| **Build System** | GNU Make (`Makefile`) & MinGW `g++` |
 
 ---
 
 ## 🎨 Design Language
 
-- **Theme:** Glassmorphism — frosted glass panels, translucency, blur-like layering via SFML draw order
-- **Primary Accent:** `#00A651` (Pakistan Green)
-- **Secondary Accent:** `#FFFFFF` (White)
-- **Background:** Deep dark base (`#0D1117`) with semi-transparent card overlays
-- **Typography:** Clean sans-serif via SFML fonts
+PakistanHub breaks away from traditional native UI limits by implementing a customized rendering engine on top of SFML:
+*   **Theming:** Deep navy/gray background (`#0D1117`) paired with a vibrant Pakistan Green accent (`#00A651`).
+*   **Advanced Rendering:** Uses `sf::ConvexShape` algorithms to eliminate alpha-blending artifacts on translucent rounded rectangles.
+*   **Typography:** Clean sans-serif integration with full UTF-8 support for emojis (like ♥ and ♡).
 
 ---
 
-## 🗂️ Project Phases
+## 🚀 How to Run (Windows)
 
-| Phase | Description | Status |
-|---|---|---|
-| Phase 1 | Project setup, folder structure, base classes, Makefile | ✅ |
-| Phase 2 | User system — register, login, profiles, file persistence | ✅ |
-| Phase 3 | Core feed — create posts, display feed, like posts | ✅ |
-| Phase 4 | Social graph — follow/unfollow, follower feed filtering | ✅ |
-| Phase 5 | UI polish — glassmorphism panels, animations, transitions | ✅ |
-| Phase 6 | Comments, notifications, search | ✅ |
-| Phase 7 | Final integration, edge-case handling, cleanup | ✅ |
+### Prerequisites
+*   **MinGW-w64** installed and added to your system PATH.
+*   **SFML 2.5.1** (GCC MinGW version) installed and properly configured, or its binaries placed in the working directory/PATH.
+
+### Build and Execute
+1. Clone or download the repository.
+2. Open a terminal (PowerShell or CMD) in the project root directory.
+3. Compile the project using the included Makefile:
+   ```bash
+   mingw32-make
+   ```
+4. Run the compiled executable:
+   ```bash
+   ./PakistanHub.exe
+   ```
+
+*(Note: To perform a clean rebuild, run `mingw32-make clean` first).*
 
 ---
 
-## 📁 Folder Structure
+## 📁 Directory Structure
 
-```
+```text
 PakistanHub/
-├── assets/
-│   ├── fonts/
-│   └── icons/
-├── data/
-│   ├── users.txt
-│   ├── posts.txt
-│   └── follows.txt
-├── include/
-│   ├── User.h
-│   ├── Post.h
-│   ├── Feed.h
-│   ├── SocialGraph.h
-│   ├── UIComponent.h
-│   └── App.h
-├── src/
-│   ├── User.cpp
-│   ├── Post.cpp
-│   ├── Feed.cpp
-│   ├── SocialGraph.cpp
-│   ├── UIComponent.cpp
-│   ├── App.cpp
-│   └── main.cpp
-├── Makefile
-└── README.md
+├── assets/         # Fonts, icons, generated cover & avatar images
+├── data/           # Persistent storage (users.txt, posts.txt, etc.)
+├── include/        # C++ Header files (.h)
+├── src/            # C++ Source files (.cpp)
+├── Makefile        # Build instructions
+└── README.md       # Project documentation
 ```
 
 ---
+
 ## 👤 Author
 
-**Hamza** —FAST LAHORE 
-Project: OOP C++ Social Media Clone 
+**Hamza** — FAST NUCES, Lahore  
+*Project: OOP C++ Social Media Clone*
